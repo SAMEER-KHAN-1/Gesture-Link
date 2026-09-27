@@ -1,0 +1,92 @@
+package com.gesturelink.app.network
+
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+
+enum class ConnectionState { DISCONNECTED, CONNECTING, CONNECTED }
+
+/**
+ * Thin wrapper around an OkHttp WebSocket that speaks the GestureLink command
+ * protocol: send a CommandRequest, suspend until the matching CommandResponse
+ * (same id) comes back.
+ */
+class GestureLinkClient {
+
+    private val json = Json { ignoreUnknownKeys = true }
+    private val httpClient = OkHttpClient()
+    private var webSocket: WebSocket? = null
+    private val pendingRequests = ConcurrentHashMap<String, CancellableContinuation<CommandResponse>>()
+
+    var state: ConnectionState = ConnectionState.DISCONNECTED
+        private set
+
+    fun connect(host: String, port: Int, onStateChanged: (ConnectionState) -> Unit) {
+        state = ConnectionState.CONNECTING
+        onStateChanged(state)
+
+        val request = Request.Builder().url("ws://$host:$port/ws").build()
+        webSocket = httpClient.newWebSocket(
+            request,
+            object : WebSocketListener() {
+                override fun onOpen(webSocket: WebSocket, response: Response) {
+                    state = ConnectionState.CONNECTED
+                    onStateChanged(state)
+                }
+
+                override fun onMessage(webSocket: WebSocket, text: String) {
+                    val response = runCatching {
+                        json.decodeFromString(CommandResponse.serializer(), text)
+                    }.getOrNull() ?: return
+                    pendingRequests.remove(response.id)?.resume(response)
+                }
+
+                override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                    state = ConnectionState.DISCONNECTED
+                    onStateChanged(state)
+                }
+
+                override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                    state = ConnectionState.DISCONNECTED
+                    onStateChanged(state)
+                }
+            },
+        )
+    }
+
+    suspend fun sendCommand(
+        token: String,
+        action: String,
+        params: JsonObject = JsonObject(emptyMap()),
+    ): CommandResponse {
+        val ws = webSocket ?: throw IllegalStateException("not connected to a PC yet")
+        val id = UUID.randomUUID().toString().take(8)
+        val request = CommandRequest(id = id, token = token, action = action, params = params)
+        val payload = json.encodeToString(CommandRequest.serializer(), request)
+
+        return suspendCancellableCoroutine { continuation ->
+            pendingRequests[id] = continuation
+            val enqueued = ws.send(payload)
+            if (!enqueued) {
+                pendingRequests.remove(id)
+                continuation.resumeWithException(IllegalStateException("failed to send '$action' - connection may be closed"))
+            }
+        }
+    }
+
+    fun disconnect() {
+        webSocket?.close(1000, "client disconnect")
+        webSocket = null
+        state = ConnectionState.DISCONNECTED
+    }
+}

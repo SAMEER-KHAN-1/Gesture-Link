@@ -10,7 +10,12 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 
 ## What's here so far
 
-Just the project skeleton - Gradle setup, manifest, a placeholder launcher icon, and a single Compose screen that renders "GestureLink" so we can confirm the app builds and installs before wiring up any real functionality. Pairing, the dashboard, and the WebSocket client are coming in the next commits.
+- Project skeleton - Gradle setup, manifest, placeholder launcher icon
+- `network/` - `GestureLinkClient`, a small OkHttp WebSocket wrapper that speaks the same JSON protocol as the PC server (`Protocol.kt` mirrors `server/protocol.py`)
+- `data/PairingStore.kt` - remembers the last PC (IP + token) that paired successfully, so the app can reconnect without re-entering it
+- `ui/PairingScreen.kt` + `MainActivity.kt` - a first screen: enter the PC's IP and pairing token, hit Connect, see whether it worked
+
+The actual command dashboard (buttons for shutdown/restart/wifi/bluetooth/apps) is coming in the next commit - right now, once connected, it just shows "Connected to PC".
 
 ## Structure
 
@@ -20,7 +25,11 @@ android-app/
 │   ├── build.gradle.kts
 │   └── src/main/
 │       ├── AndroidManifest.xml
-│       ├── java/com/gesturelink/app/MainActivity.kt
+│       ├── java/com/gesturelink/app/
+│       │   ├── MainActivity.kt
+│       │   ├── network/       # protocol models + WebSocket client
+│       │   ├── data/          # local pairing storage
+│       │   └── ui/            # Compose screens
 │       └── res/
 ├── build.gradle.kts        # root project
 ├── settings.gradle.kts
