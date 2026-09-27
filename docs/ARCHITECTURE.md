@@ -83,8 +83,9 @@ All messages are JSON over the single WebSocket connection.
 | `bluetooth_set`  | `{ "enabled": true }`      | turns the bluetooth radio on/off                |
 | `apps_list`      | –                          | returns installed/known-launchable apps         |
 | `app_launch`     | `{ "app_id": "..." }`      | launches an app returned by `apps_list`         |
+| `system_stats`   | –                          | returns CPU %, RAM %, and battery info          |
 
-More actions (volume, media keys, system stats, file transfer, input control) will be added the same way as the project grows — this table is the contract both sides code against, so it's kept up to date whenever an action is added or changed.
+More actions (volume, media keys, file transfer, input control) will be added the same way as the project grows — this table is the contract both sides code against, so it's kept up to date whenever an action is added or changed.
 
 ## Repo layout
 

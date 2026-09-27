@@ -35,3 +35,12 @@ data class AppInfo(
 
 @Serializable
 data class AppsListResult(val apps: List<AppInfo> = emptyList())
+
+/** Shape of the `result` payload for the `system_stats` action. */
+@Serializable
+data class SystemStats(
+    @SerialName("cpu_percent") val cpuPercent: Double,
+    @SerialName("memory_percent") val memoryPercent: Double,
+    @SerialName("battery_percent") val batteryPercent: Double? = null,
+    @SerialName("battery_plugged") val batteryPlugged: Boolean? = null,
+)

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,14 +20,19 @@ import com.gesturelink.app.network.AppInfo
 import com.gesturelink.app.network.AppsListResult
 import com.gesturelink.app.network.ConnectionState
 import com.gesturelink.app.network.GestureLinkClient
+import com.gesturelink.app.network.SystemStats
 import com.gesturelink.app.ui.AppsScreen
 import com.gesturelink.app.ui.DashboardScreen
 import com.gesturelink.app.ui.PairingScreen
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+
+private const val STATS_POLL_INTERVAL_MS = 5000L
 
 private sealed class Screen {
     object Pairing : Screen()
@@ -58,6 +64,7 @@ class MainActivity : ComponentActivity() {
 
             var apps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
             var appsLoading by remember { mutableStateOf(false) }
+            var stats by remember { mutableStateOf<SystemStats?>(null) }
 
             val snackbarHostState = remember { SnackbarHostState() }
             val coroutineScope = rememberCoroutineScope()
@@ -104,43 +111,60 @@ class MainActivity : ComponentActivity() {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     when (screen) {
-                        Screen.Dashboard -> DashboardScreen(
-                            snackbarHostState = snackbarHostState,
-                            wifiEnabled = wifiEnabled,
-                            bluetoothEnabled = bluetoothEnabled,
-                            onShutdown = { runCommand("shutdown") },
-                            onRestart = { runCommand("restart") },
-                            onCancelShutdown = { runCommand("cancel_shutdown") },
-                            onSleep = { runCommand("sleep") },
-                            onLock = { runCommand("lock") },
-                            onWifiToggle = { enabled ->
-                                val previous = wifiEnabled
-                                wifiEnabled = enabled
-                                runCommand(
-                                    action = "wifi_set",
-                                    params = buildJsonObject { put("enabled", enabled) },
-                                    onFailureRevert = { wifiEnabled = previous },
-                                )
-                            },
-                            onBluetoothToggle = { enabled ->
-                                val previous = bluetoothEnabled
-                                bluetoothEnabled = enabled
-                                runCommand(
-                                    action = "bluetooth_set",
-                                    params = buildJsonObject { put("enabled", enabled) },
-                                    onFailureRevert = { bluetoothEnabled = previous },
-                                )
-                            },
-                            onOpenApps = {
-                                screen = Screen.Apps
-                                loadApps()
-                            },
-                            onDisconnect = {
-                                client.disconnect()
-                                connectionState = ConnectionState.DISCONNECTED
-                                screen = Screen.Pairing
-                            },
-                        )
+                        Screen.Dashboard -> {
+                            LaunchedEffect(Unit) {
+                                while (isActive) {
+                                    runCatching { client.sendCommand(pairedToken, "system_stats") }
+                                        .onSuccess { response ->
+                                            if (response.ok) {
+                                                stats = Json.decodeFromJsonElement(
+                                                    SystemStats.serializer(),
+                                                    response.result,
+                                                )
+                                            }
+                                        }
+                                    delay(STATS_POLL_INTERVAL_MS)
+                                }
+                            }
+                            DashboardScreen(
+                                snackbarHostState = snackbarHostState,
+                                stats = stats,
+                                wifiEnabled = wifiEnabled,
+                                bluetoothEnabled = bluetoothEnabled,
+                                onShutdown = { runCommand("shutdown") },
+                                onRestart = { runCommand("restart") },
+                                onCancelShutdown = { runCommand("cancel_shutdown") },
+                                onSleep = { runCommand("sleep") },
+                                onLock = { runCommand("lock") },
+                                onWifiToggle = { enabled ->
+                                    val previous = wifiEnabled
+                                    wifiEnabled = enabled
+                                    runCommand(
+                                        action = "wifi_set",
+                                        params = buildJsonObject { put("enabled", enabled) },
+                                        onFailureRevert = { wifiEnabled = previous },
+                                    )
+                                },
+                                onBluetoothToggle = { enabled ->
+                                    val previous = bluetoothEnabled
+                                    bluetoothEnabled = enabled
+                                    runCommand(
+                                        action = "bluetooth_set",
+                                        params = buildJsonObject { put("enabled", enabled) },
+                                        onFailureRevert = { bluetoothEnabled = previous },
+                                    )
+                                },
+                                onOpenApps = {
+                                    screen = Screen.Apps
+                                    loadApps()
+                                },
+                                onDisconnect = {
+                                    client.disconnect()
+                                    connectionState = ConnectionState.DISCONNECTED
+                                    screen = Screen.Pairing
+                                },
+                            )
+                        }
 
                         Screen.Apps -> AppsScreen(
                             snackbarHostState = snackbarHostState,

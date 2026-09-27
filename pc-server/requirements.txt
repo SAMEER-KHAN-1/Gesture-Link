@@ -4,3 +4,4 @@ pywin32==306; sys_platform == "win32"
 pystray==0.19.5
 Pillow==10.4.0
 qrcode==7.4.2
+psutil==6.0.0

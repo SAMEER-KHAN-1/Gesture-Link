@@ -27,12 +27,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.gesturelink.app.network.SystemStats
+import kotlin.math.roundToInt
 
 private enum class ConfirmAction { SHUTDOWN, RESTART }
 
 @Composable
 fun DashboardScreen(
     snackbarHostState: SnackbarHostState,
+    stats: SystemStats?,
     wifiEnabled: Boolean,
     bluetoothEnabled: Boolean,
     onShutdown: () -> Unit,
@@ -61,6 +64,24 @@ fun DashboardScreen(
                 Text(text = "GestureLink", style = MaterialTheme.typography.headlineSmall)
                 TextButton(onClick = onDisconnect) { Text("Disconnect") }
             }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "System", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (stats == null) {
+                        Text("Loading...")
+                    } else {
+                        Text("CPU ${stats.cpuPercent.roundToInt()}%  ·  RAM ${stats.memoryPercent.roundToInt()}%")
+                        if (stats.batteryPercent != null) {
+                            val chargingLabel = if (stats.batteryPlugged == true) "charging" else "on battery"
+                            Text("Battery ${stats.batteryPercent.roundToInt()}% ($chargingLabel)")
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             Card(modifier = Modifier.fillMaxWidth()) {
