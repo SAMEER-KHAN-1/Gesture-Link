@@ -1,0 +1,7 @@
+<resources>
+    <!-- Just governs the launch background before Compose takes over - actual
+         theming (colors, typography) lives in Kotlin, in GestureLinkTheme. -->
+    <style name="Theme.GestureLink" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/ic_launcher_background</item>
+    </style>
+</resources>
