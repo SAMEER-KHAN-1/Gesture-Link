@@ -1,0 +1,51 @@
+# ---- Python (pc-server) ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# PyInstaller build output
+pc-server/build/
+pc-server/dist/
+*.spec.bak
+
+# ---- Android / Gradle (android-app) ----
+android-app/.gradle/
+android-app/build/
+android-app/*/build/
+android-app/local.properties
+android-app/.idea/
+android-app/captures/
+android-app/.cxx/
+android-app/*.iml
+android-app/.externalNativeBuild/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.keystore
+*.jks
+
+# ---- IDE / editor ----
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ---- OS ----
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ---- Secrets / local config ----
+*.local.json
+pairing_token.txt
+config.local.*
