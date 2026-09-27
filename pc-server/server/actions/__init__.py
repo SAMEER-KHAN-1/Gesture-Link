@@ -25,4 +25,4 @@ def get_handler(action_name: str) -> ActionHandler | None:
 
 
 # Import submodules so their @register(...) calls actually run and populate the registry.
-from . import system  # noqa: E402,F401
+from . import power, system  # noqa: E402,F401

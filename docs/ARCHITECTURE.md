@@ -76,6 +76,7 @@ All messages are JSON over the single WebSocket connection.
 | `ping`           | –                          | connectivity check, PC replies with `pong`      |
 | `shutdown`       | `{ "delay_seconds": 0 }`   | shuts the PC down                               |
 | `restart`        | `{ "delay_seconds": 0 }`   | restarts the PC                                 |
+| `cancel_shutdown`| –                          | cancels a pending shutdown/restart               |
 | `sleep`          | –                          | puts the PC to sleep                            |
 | `lock`           | –                          | locks the current session                       |
 | `wifi_set`       | `{ "enabled": true }`      | turns the wifi radio on/off                     |
