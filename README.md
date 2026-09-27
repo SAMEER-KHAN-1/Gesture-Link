@@ -17,12 +17,14 @@ Control your Windows PC from your Android phone over your local network — powe
 - List installed / running apps
 - Launch an app remotely
 
+**Pairing**
+- Scan a QR code shown on the PC (or enter its IP + token by hand)
+
 **Planned next**
 - Volume / media control
 - Battery & system stats on the dashboard
 - File browser / quick file transfer
 - Mouse/keyboard remote input
-- QR-code pairing instead of manual IP entry
 
 ## How it works
 

@@ -11,6 +11,7 @@ import uvicorn
 from PIL import Image, ImageDraw
 
 from server.config import get_app_data_dir, load_config
+from server.pairing_qr import show_pairing_qr
 
 ICON_SIZE = 64
 
@@ -34,6 +35,7 @@ class ServerTray:
             title="GestureLink",
             menu=pystray.Menu(
                 pystray.MenuItem(self._token_label, None, enabled=False),
+                pystray.MenuItem("Show pairing QR code", self._show_qr),
                 pystray.MenuItem("Open config folder", self._open_config_folder),
                 pystray.MenuItem("Quit", self._quit),
             ),
@@ -41,6 +43,9 @@ class ServerTray:
 
     def _token_label(self, item) -> str:
         return f"Pairing token: {self.config['pairing_token']}"
+
+    def _show_qr(self, icon, item) -> None:
+        show_pairing_qr()
 
     def _open_config_folder(self, icon, item) -> None:
         webbrowser.open(str(get_app_data_dir()))
