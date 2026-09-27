@@ -1,12 +1,19 @@
 """FastAPI app entry point for the GestureLink PC server.
 
-For now this just boots the app and exposes a health check so we can confirm
-the service is reachable on the LAN before wiring up real commands.
+Boots the app, exposes a health check, and hosts the /ws endpoint the Android
+app actually talks to for commands.
 """
 
-from fastapi import FastAPI
+import json
 
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from pydantic import ValidationError
+
+from server.actions import get_handler
+from server.auth import is_token_valid
 from server.config import load_config
+from server.protocol import CommandRequest, CommandResponse
+from server.ws_manager import manager
 
 app = FastAPI(title="GestureLink PC Server")
 
@@ -21,3 +28,38 @@ def on_startup():
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "GestureLink PC Server"}
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            raw = await websocket.receive_text()
+            response = await handle_message(raw)
+            await websocket.send_text(response.model_dump_json())
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
+
+async def handle_message(raw: str) -> CommandResponse:
+    try:
+        data = json.loads(raw)
+        request = CommandRequest(**data)
+    except (json.JSONDecodeError, ValidationError):
+        return CommandResponse(id="unknown", ok=False, action="unknown", error="malformed request")
+
+    if not is_token_valid(request.token):
+        return CommandResponse(id=request.id, ok=False, action=request.action, error="invalid pairing token")
+
+    handler = get_handler(request.action)
+    if handler is None:
+        return CommandResponse(
+            id=request.id, ok=False, action=request.action, error=f"unknown action '{request.action}'"
+        )
+
+    try:
+        result = await handler(request.params)
+        return CommandResponse(id=request.id, ok=True, action=request.action, result=result)
+    except Exception as exc:
+        return CommandResponse(id=request.id, ok=False, action=request.action, error=str(exc))
