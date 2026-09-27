@@ -1,9 +1,6 @@
-"""Entry point: `python run.py` starts the GestureLink server on this PC."""
+"""Entry point: `python run.py` starts the GestureLink server + tray icon on this PC."""
 
-import uvicorn
-
-from server.config import load_config
+from server.tray import ServerTray
 
 if __name__ == "__main__":
-    config = load_config()
-    uvicorn.run("server.main:app", host=config["host"], port=config["port"], reload=False)
+    ServerTray().start()
