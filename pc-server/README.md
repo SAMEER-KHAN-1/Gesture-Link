@@ -38,3 +38,14 @@ http://<pc-lan-ip>:8765/health
 - Apps: `apps_list`, `app_launch`
 
 Full protocol/action reference lives in [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
+
+## Packaging to a standalone .exe
+
+For actually running this day-to-day you don't want to open a terminal and `python run.py` every time - PyInstaller bundles it into one `.exe` that runs on its own.
+
+```
+pip install -r requirements-build.txt
+./build.ps1
+```
+
+That's `pyinstaller --clean gesturelink.spec` under the hood. Output lands at `dist/GestureLink.exe` — a windowed app (no console), still shows the same tray icon, still creates its config the same way on first run. Copy it into `shell:startup` (Win+R → `shell:startup`) if you want it to launch automatically when you log in.
