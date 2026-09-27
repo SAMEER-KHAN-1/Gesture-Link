@@ -15,14 +15,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.gesturelink.app.data.PairingInfo
 import com.gesturelink.app.data.PairingStore
+import com.gesturelink.app.network.AppInfo
+import com.gesturelink.app.network.AppsListResult
 import com.gesturelink.app.network.ConnectionState
 import com.gesturelink.app.network.GestureLinkClient
+import com.gesturelink.app.ui.AppsScreen
 import com.gesturelink.app.ui.DashboardScreen
 import com.gesturelink.app.ui.PairingScreen
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+
+private sealed class Screen {
+    object Pairing : Screen()
+    object Dashboard : Screen()
+    object Apps : Screen()
+}
 
 class MainActivity : ComponentActivity() {
 
@@ -35,6 +45,7 @@ class MainActivity : ComponentActivity() {
         val saved = pairingStore.load()
 
         setContent {
+            var screen by remember { mutableStateOf<Screen>(Screen.Pairing) }
             var connectionState by remember { mutableStateOf(ConnectionState.DISCONNECTED) }
             var errorMessage by remember { mutableStateOf<String?>(null) }
             var pairedToken by remember { mutableStateOf(saved?.token.orEmpty()) }
@@ -44,6 +55,9 @@ class MainActivity : ComponentActivity() {
             // the PC's real radio state until that's added.
             var wifiEnabled by remember { mutableStateOf(true) }
             var bluetoothEnabled by remember { mutableStateOf(true) }
+
+            var apps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
+            var appsLoading by remember { mutableStateOf(false) }
 
             val snackbarHostState = remember { SnackbarHostState() }
             val coroutineScope = rememberCoroutineScope()
@@ -68,10 +82,29 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            fun loadApps() {
+                appsLoading = true
+                coroutineScope.launch {
+                    runCatching { client.sendCommand(pairedToken, "apps_list") }
+                        .onSuccess { response ->
+                            appsLoading = false
+                            if (response.ok) {
+                                apps = Json.decodeFromJsonElement(AppsListResult.serializer(), response.result).apps
+                            } else {
+                                snackbarHostState.showSnackbar(response.error ?: "couldn't load apps")
+                            }
+                        }
+                        .onFailure { throwable ->
+                            appsLoading = false
+                            snackbarHostState.showSnackbar(throwable.message ?: "couldn't load apps")
+                        }
+                }
+            }
+
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    if (connectionState == ConnectionState.CONNECTED) {
-                        DashboardScreen(
+                    when (screen) {
+                        Screen.Dashboard -> DashboardScreen(
                             snackbarHostState = snackbarHostState,
                             wifiEnabled = wifiEnabled,
                             bluetoothEnabled = bluetoothEnabled,
@@ -99,17 +132,28 @@ class MainActivity : ComponentActivity() {
                                 )
                             },
                             onOpenApps = {
-                                coroutineScope.launch {
-                                    snackbarHostState.showSnackbar("App browser is coming in the next commit")
-                                }
+                                screen = Screen.Apps
+                                loadApps()
                             },
                             onDisconnect = {
                                 client.disconnect()
                                 connectionState = ConnectionState.DISCONNECTED
+                                screen = Screen.Pairing
                             },
                         )
-                    } else {
-                        PairingScreen(
+
+                        Screen.Apps -> AppsScreen(
+                            snackbarHostState = snackbarHostState,
+                            isLoading = appsLoading,
+                            apps = apps,
+                            onLaunch = { app ->
+                                runCommand("app_launch", buildJsonObject { put("app_id", app.appId) })
+                                coroutineScope.launch { snackbarHostState.showSnackbar("Launching ${app.name}") }
+                            },
+                            onBack = { screen = Screen.Dashboard },
+                        )
+
+                        Screen.Pairing -> PairingScreen(
                             initialHost = saved?.host.orEmpty(),
                             initialToken = saved?.token.orEmpty(),
                             isConnecting = connectionState == ConnectionState.CONNECTING,
@@ -122,8 +166,10 @@ class MainActivity : ComponentActivity() {
                                     runOnUiThread {
                                         connectionState = state
                                         when (state) {
-                                            ConnectionState.CONNECTED ->
+                                            ConnectionState.CONNECTED -> {
                                                 pairingStore.save(PairingInfo(host, PairingStore.DEFAULT_PORT, token))
+                                                screen = Screen.Dashboard
+                                            }
                                             ConnectionState.DISCONNECTED ->
                                                 errorMessage = "Couldn't reach the PC - check the IP and that the server is running."
                                             else -> Unit

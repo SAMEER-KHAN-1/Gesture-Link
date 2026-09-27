@@ -13,9 +13,12 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - Project skeleton - Gradle setup, manifest, placeholder launcher icon
 - `network/` - `GestureLinkClient`, a small OkHttp WebSocket wrapper that speaks the same JSON protocol as the PC server (`Protocol.kt` mirrors `server/protocol.py`)
 - `data/PairingStore.kt` - remembers the last PC (IP + token) that paired successfully, so the app can reconnect without re-entering it
-- `ui/PairingScreen.kt` + `MainActivity.kt` - a first screen: enter the PC's IP and pairing token, hit Connect, see whether it worked
+- `ui/PairingScreen.kt` - enter the PC's IP and pairing token, hit Connect, see whether it worked
+- `ui/DashboardScreen.kt` - power controls (shutdown/restart behind a confirmation dialog, sleep, lock, cancel pending shutdown) and wifi/bluetooth switches
+- `ui/AppsScreen.kt` - fetches the PC's app list, searchable, tap an app to launch it remotely
+- `MainActivity.kt` - a small in-memory screen state machine (Pairing → Dashboard → Apps) wiring all of the above to `GestureLinkClient`
 
-The actual command dashboard (buttons for shutdown/restart/wifi/bluetooth/apps) is coming in the next commit - right now, once connected, it just shows "Connected to PC".
+This now covers the full v1 feature set end to end: pair, then shut down / restart / sleep / lock the PC, flip wifi/bluetooth, and launch apps, all from the phone.
 
 ## Structure
 
