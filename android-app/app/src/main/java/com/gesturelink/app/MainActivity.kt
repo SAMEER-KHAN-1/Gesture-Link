@@ -142,6 +142,34 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            fun connectTo(host: String, token: String) {
+                errorMessage = null
+                pairedToken = token
+                client.connect(host, PairingStore.DEFAULT_PORT) { state ->
+                    // Callback fires on OkHttp's thread, not the main thread.
+                    runOnUiThread {
+                        connectionState = state
+                        when (state) {
+                            ConnectionState.CONNECTED -> {
+                                pairingStore.save(PairingInfo(host, PairingStore.DEFAULT_PORT, token))
+                                screen = Screen.Dashboard
+                            }
+                            ConnectionState.DISCONNECTED ->
+                                errorMessage = "Couldn't reach the PC - check the IP and that the server is running."
+                            else -> Unit
+                        }
+                    }
+                }
+            }
+
+            // Try the last PC we paired with automatically, so re-opening the app doesn't
+            // always mean re-entering (or re-scanning) the IP and token by hand.
+            LaunchedEffect(Unit) {
+                if (saved != null) {
+                    connectTo(saved.host, saved.token)
+                }
+            }
+
             fun downloadFile(entry: FileEntry) {
                 downloadingPath = entry.path
                 coroutineScope.launch {
@@ -304,25 +332,7 @@ class MainActivity : ComponentActivity() {
                             initialToken = saved?.token.orEmpty(),
                             isConnecting = connectionState == ConnectionState.CONNECTING,
                             errorMessage = errorMessage,
-                            onConnect = { host, token ->
-                                errorMessage = null
-                                pairedToken = token
-                                client.connect(host, PairingStore.DEFAULT_PORT) { state ->
-                                    // Callback fires on OkHttp's thread, not the main thread.
-                                    runOnUiThread {
-                                        connectionState = state
-                                        when (state) {
-                                            ConnectionState.CONNECTED -> {
-                                                pairingStore.save(PairingInfo(host, PairingStore.DEFAULT_PORT, token))
-                                                screen = Screen.Dashboard
-                                            }
-                                            ConnectionState.DISCONNECTED ->
-                                                errorMessage = "Couldn't reach the PC - check the IP and that the server is running."
-                                            else -> Unit
-                                        }
-                                    }
-                                }
-                            },
+                            onConnect = { host, token -> connectTo(host, token) },
                         )
                     }
                 }
