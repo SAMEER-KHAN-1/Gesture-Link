@@ -47,6 +47,7 @@ fun DashboardScreen(
     onBluetoothToggle: (Boolean) -> Unit,
     onOpenApps: () -> Unit,
     onOpenFiles: () -> Unit,
+    onOpenTouchpad: () -> Unit,
     onDisconnect: () -> Unit,
     onVolumeUp: () -> Unit,
     onVolumeDown: () -> Unit,
@@ -190,6 +191,18 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = onOpenFiles, modifier = Modifier.fillMaxWidth()) {
                         Text("Browse files")
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "Touchpad", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = onOpenTouchpad, modifier = Modifier.fillMaxWidth()) {
+                        Text("Open touchpad")
                     }
                 }
             }

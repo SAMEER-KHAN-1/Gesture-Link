@@ -28,11 +28,14 @@ Control your Windows PC from your Android phone over your local network — powe
 - Browse the PC's drives and folders
 - Download a file from the PC to the phone (15MB limit)
 
+**Touchpad**
+- Drag to move the mouse, tap to left/right click, scroll up/down
+
 **Pairing**
 - Scan a QR code shown on the PC (or enter its IP + token by hand)
 
 **Planned next**
-- Mouse/keyboard remote input
+- Keyboard remote input
 
 ## How it works
 

@@ -92,8 +92,11 @@ All messages are JSON over the single WebSocket connection.
 | `media_previous` | –                          | presses the previous-track media key             |
 | `list_dir`       | `{ "path": "" }`           | lists a directory's contents (empty path = drives) |
 | `download_file`  | `{ "path": "..." }`        | returns a file's bytes, base64-encoded (15MB limit) |
+| `mouse_move`     | `{ "dx": 0, "dy": 0 }`     | moves the cursor relative to its current position |
+| `mouse_click`    | `{ "button": "left" }`     | clicks the left or right mouse button           |
+| `mouse_scroll`   | `{ "ticks": 0 }`           | scrolls the wheel (positive = down, negative = up) |
 
-More actions (file transfer, mouse/keyboard input) will be added the same way as the project grows — this table is the contract both sides code against, so it's kept up to date whenever an action is added or changed.
+More actions (keyboard input) will be added the same way as the project grows — this table is the contract both sides code against, so it's kept up to date whenever an action is added or changed.
 
 ## Repo layout
 

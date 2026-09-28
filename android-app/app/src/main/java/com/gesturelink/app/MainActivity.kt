@@ -29,6 +29,7 @@ import com.gesturelink.app.ui.AppsScreen
 import com.gesturelink.app.ui.DashboardScreen
 import com.gesturelink.app.ui.FilesScreen
 import com.gesturelink.app.ui.PairingScreen
+import com.gesturelink.app.ui.TouchpadScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -44,6 +45,7 @@ private sealed class Screen {
     object Dashboard : Screen()
     object Apps : Screen()
     object Files : Screen()
+    object Touchpad : Screen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -219,6 +221,7 @@ class MainActivity : ComponentActivity() {
                                     filesPathStack = emptyList()
                                     loadDir("")
                                 },
+                                onOpenTouchpad = { screen = Screen.Touchpad },
                                 onDisconnect = {
                                     client.disconnect()
                                     connectionState = ConnectionState.DISCONNECTED
@@ -262,6 +265,19 @@ class MainActivity : ComponentActivity() {
                             onNavigateUp = {
                                 filesPathStack = filesPathStack.dropLast(1)
                                 loadDir(filesPathStack.lastOrNull() ?: "")
+                            },
+                            onBack = { screen = Screen.Dashboard },
+                        )
+
+                        Screen.Touchpad -> TouchpadScreen(
+                            onMove = { dx, dy ->
+                                runCommand("mouse_move", buildJsonObject { put("dx", dx); put("dy", dy) })
+                            },
+                            onClick = { button ->
+                                runCommand("mouse_click", buildJsonObject { put("button", button) })
+                            },
+                            onScroll = { ticks ->
+                                runCommand("mouse_scroll", buildJsonObject { put("ticks", ticks) })
                             },
                             onBack = { screen = Screen.Dashboard },
                         )
