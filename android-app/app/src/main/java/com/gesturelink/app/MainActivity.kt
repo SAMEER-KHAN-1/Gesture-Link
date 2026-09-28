@@ -65,6 +65,10 @@ class MainActivity : ComponentActivity() {
             var errorMessage by remember { mutableStateOf<String?>(null) }
             var pairedToken by remember { mutableStateOf(saved?.token.orEmpty()) }
 
+            // Mirrors what's in PairingStore, but as compose state so forgetting a PC
+            // clears the pairing screen's fields immediately instead of showing stale ones.
+            var savedInfo by remember { mutableStateOf(saved) }
+
             // Start optimistically enabled; corrected by a radio_status query as soon as
             // the dashboard loads (see the LaunchedEffect below).
             var wifiEnabled by remember { mutableStateOf(true) }
@@ -151,7 +155,9 @@ class MainActivity : ComponentActivity() {
                         connectionState = state
                         when (state) {
                             ConnectionState.CONNECTED -> {
-                                pairingStore.save(PairingInfo(host, PairingStore.DEFAULT_PORT, token))
+                                val info = PairingInfo(host, PairingStore.DEFAULT_PORT, token)
+                                pairingStore.save(info)
+                                savedInfo = info
                                 screen = Screen.Dashboard
                             }
                             ConnectionState.DISCONNECTED ->
@@ -266,6 +272,13 @@ class MainActivity : ComponentActivity() {
                                     connectionState = ConnectionState.DISCONNECTED
                                     screen = Screen.Pairing
                                 },
+                                onForget = {
+                                    client.disconnect()
+                                    pairingStore.clear()
+                                    savedInfo = null
+                                    connectionState = ConnectionState.DISCONNECTED
+                                    screen = Screen.Pairing
+                                },
                                 onVolumeUp = { runCommand("volume_up") },
                                 onVolumeDown = { runCommand("volume_down") },
                                 onVolumeMuteToggle = { runCommand("volume_mute_toggle") },
@@ -328,8 +341,8 @@ class MainActivity : ComponentActivity() {
                         )
 
                         Screen.Pairing -> PairingScreen(
-                            initialHost = saved?.host.orEmpty(),
-                            initialToken = saved?.token.orEmpty(),
+                            initialHost = savedInfo?.host.orEmpty(),
+                            initialToken = savedInfo?.token.orEmpty(),
                             isConnecting = connectionState == ConnectionState.CONNECTING,
                             errorMessage = errorMessage,
                             onConnect = { host, token -> connectTo(host, token) },
