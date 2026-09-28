@@ -163,6 +163,12 @@ class MainActivity : ComponentActivity() {
                                     connectionState = ConnectionState.DISCONNECTED
                                     screen = Screen.Pairing
                                 },
+                                onVolumeUp = { runCommand("volume_up") },
+                                onVolumeDown = { runCommand("volume_down") },
+                                onVolumeMuteToggle = { runCommand("volume_mute_toggle") },
+                                onMediaPrevious = { runCommand("media_previous") },
+                                onMediaPlayPause = { runCommand("media_play_pause") },
+                                onMediaNext = { runCommand("media_next") },
                             )
                         }
 

@@ -84,8 +84,14 @@ All messages are JSON over the single WebSocket connection.
 | `apps_list`      | –                          | returns installed/known-launchable apps         |
 | `app_launch`     | `{ "app_id": "..." }`      | launches an app returned by `apps_list`         |
 | `system_stats`   | –                          | returns CPU %, RAM %, and battery info          |
+| `volume_up`      | –                          | presses the volume-up media key                 |
+| `volume_down`    | –                          | presses the volume-down media key                |
+| `volume_mute_toggle` | –                      | presses the mute media key                       |
+| `media_play_pause` | –                        | presses the play/pause media key                 |
+| `media_next`     | –                          | presses the next-track media key                 |
+| `media_previous` | –                          | presses the previous-track media key             |
 
-More actions (volume, media keys, file transfer, input control) will be added the same way as the project grows — this table is the contract both sides code against, so it's kept up to date whenever an action is added or changed.
+More actions (file transfer, mouse/keyboard input) will be added the same way as the project grows — this table is the contract both sides code against, so it's kept up to date whenever an action is added or changed.
 
 ## Repo layout
 

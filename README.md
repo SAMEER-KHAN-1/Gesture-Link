@@ -17,12 +17,17 @@ Control your Windows PC from your Android phone over your local network — powe
 - List installed / running apps
 - Launch an app remotely
 
+**Media**
+- Volume up/down/mute
+- Play/pause, next/previous track
+
+**Dashboard**
+- Live CPU / RAM / battery stats
+
 **Pairing**
 - Scan a QR code shown on the PC (or enter its IP + token by hand)
 
 **Planned next**
-- Volume / media control
-- Battery & system stats on the dashboard
 - File browser / quick file transfer
 - Mouse/keyboard remote input
 

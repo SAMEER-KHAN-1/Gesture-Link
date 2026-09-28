@@ -47,6 +47,12 @@ fun DashboardScreen(
     onBluetoothToggle: (Boolean) -> Unit,
     onOpenApps: () -> Unit,
     onDisconnect: () -> Unit,
+    onVolumeUp: () -> Unit,
+    onVolumeDown: () -> Unit,
+    onVolumeMuteToggle: () -> Unit,
+    onMediaPrevious: () -> Unit,
+    onMediaPlayPause: () -> Unit,
+    onMediaNext: () -> Unit,
 ) {
     var pendingConfirm by remember { mutableStateOf<ConfirmAction?>(null) }
 
@@ -133,6 +139,32 @@ fun DashboardScreen(
                     ) {
                         Text("Bluetooth")
                         Switch(checked = bluetoothEnabled, onCheckedChange = onBluetoothToggle)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "Media", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        OutlinedButton(onClick = onVolumeDown, modifier = Modifier.weight(1f)) { Text("Vol -") }
+                        OutlinedButton(onClick = onVolumeMuteToggle, modifier = Modifier.weight(1f)) { Text("Mute") }
+                        OutlinedButton(onClick = onVolumeUp, modifier = Modifier.weight(1f)) { Text("Vol +") }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        OutlinedButton(onClick = onMediaPrevious, modifier = Modifier.weight(1f)) { Text("<<") }
+                        OutlinedButton(onClick = onMediaPlayPause, modifier = Modifier.weight(1f)) { Text("Play/Pause") }
+                        OutlinedButton(onClick = onMediaNext, modifier = Modifier.weight(1f)) { Text(">>") }
                     }
                 }
             }
