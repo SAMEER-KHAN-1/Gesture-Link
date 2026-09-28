@@ -24,6 +24,7 @@ import com.gesturelink.app.network.DownloadFileResult
 import com.gesturelink.app.network.FileEntry
 import com.gesturelink.app.network.GestureLinkClient
 import com.gesturelink.app.network.ListDirResult
+import com.gesturelink.app.network.RadioStatusResult
 import com.gesturelink.app.network.SystemStats
 import com.gesturelink.app.ui.AppsScreen
 import com.gesturelink.app.ui.DashboardScreen
@@ -64,9 +65,8 @@ class MainActivity : ComponentActivity() {
             var errorMessage by remember { mutableStateOf<String?>(null) }
             var pairedToken by remember { mutableStateOf(saved?.token.orEmpty()) }
 
-            // We don't have a "current state" query action yet (see docs/ARCHITECTURE.md
-            // planned actions), so these start optimistically enabled rather than reflecting
-            // the PC's real radio state until that's added.
+            // Start optimistically enabled; corrected by a radio_status query as soon as
+            // the dashboard loads (see the LaunchedEffect below).
             var wifiEnabled by remember { mutableStateOf(true) }
             var bluetoothEnabled by remember { mutableStateOf(true) }
 
@@ -171,6 +171,17 @@ class MainActivity : ComponentActivity() {
                     when (screen) {
                         Screen.Dashboard -> {
                             LaunchedEffect(Unit) {
+                                runCatching { client.sendCommand(pairedToken, "radio_status") }
+                                    .onSuccess { response ->
+                                        if (response.ok) {
+                                            val status = Json.decodeFromJsonElement(
+                                                RadioStatusResult.serializer(),
+                                                response.result,
+                                            )
+                                            wifiEnabled = status.wifiEnabled
+                                            bluetoothEnabled = status.bluetoothEnabled
+                                        }
+                                    }
                                 while (isActive) {
                                     runCatching { client.sendCommand(pairedToken, "system_stats") }
                                         .onSuccess { response ->

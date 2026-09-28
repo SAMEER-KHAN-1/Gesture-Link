@@ -34,7 +34,7 @@ http://<pc-lan-ip>:8765/health
 
 - `/ws` — the WebSocket endpoint the Android app connects to, token-authenticated
 - Power: `shutdown`, `restart`, `cancel_shutdown`, `sleep`, `lock`
-- Network: `wifi_set`, `bluetooth_set`
+- Network: `wifi_set`, `bluetooth_set`, `radio_status`
 - Apps: `apps_list`, `app_launch`
 - System: `system_stats`
 - Media: `volume_up`, `volume_down`, `volume_mute_toggle`, `media_play_pause`, `media_next`, `media_previous`

@@ -57,6 +57,13 @@ data class FileEntry(
 @Serializable
 data class ListDirResult(val path: String = "", val entries: List<FileEntry> = emptyList())
 
+/** Shape of the `result` payload for the `radio_status` action. */
+@Serializable
+data class RadioStatusResult(
+    @SerialName("wifi_enabled") val wifiEnabled: Boolean,
+    @SerialName("bluetooth_enabled") val bluetoothEnabled: Boolean,
+)
+
 /** Shape of the `result` payload for the `download_file` action. */
 @Serializable
 data class DownloadFileResult(

@@ -81,6 +81,7 @@ All messages are JSON over the single WebSocket connection.
 | `lock`           | –                          | locks the current session                       |
 | `wifi_set`       | `{ "enabled": true }`      | turns the wifi radio on/off                     |
 | `bluetooth_set`  | `{ "enabled": true }`      | turns the bluetooth radio on/off                |
+| `radio_status`   | –                          | returns the wifi/bluetooth radios' actual on/off state |
 | `apps_list`      | –                          | returns installed/known-launchable apps         |
 | `app_launch`     | `{ "app_id": "..." }`      | launches an app returned by `apps_list`         |
 | `system_stats`   | –                          | returns CPU %, RAM %, and battery info          |
