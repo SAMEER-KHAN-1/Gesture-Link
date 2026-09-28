@@ -19,10 +19,13 @@ import com.gesturelink.app.data.PairingStore
 import com.gesturelink.app.network.AppInfo
 import com.gesturelink.app.network.AppsListResult
 import com.gesturelink.app.network.ConnectionState
+import com.gesturelink.app.network.FileEntry
 import com.gesturelink.app.network.GestureLinkClient
+import com.gesturelink.app.network.ListDirResult
 import com.gesturelink.app.network.SystemStats
 import com.gesturelink.app.ui.AppsScreen
 import com.gesturelink.app.ui.DashboardScreen
+import com.gesturelink.app.ui.FilesScreen
 import com.gesturelink.app.ui.PairingScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -38,6 +41,7 @@ private sealed class Screen {
     object Pairing : Screen()
     object Dashboard : Screen()
     object Apps : Screen()
+    object Files : Screen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -65,6 +69,12 @@ class MainActivity : ComponentActivity() {
             var apps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
             var appsLoading by remember { mutableStateOf(false) }
             var stats by remember { mutableStateOf<SystemStats?>(null) }
+
+            // Empty string = drives ("This PC"). Each push is a directory the user opened,
+            // so "Up" just pops the stack instead of asking the server for a parent path.
+            var filesPathStack by remember { mutableStateOf(listOf<String>()) }
+            var fileEntries by remember { mutableStateOf<List<FileEntry>>(emptyList()) }
+            var filesLoading by remember { mutableStateOf(false) }
 
             val snackbarHostState = remember { SnackbarHostState() }
             val coroutineScope = rememberCoroutineScope()
@@ -104,6 +114,25 @@ class MainActivity : ComponentActivity() {
                         .onFailure { throwable ->
                             appsLoading = false
                             snackbarHostState.showSnackbar(throwable.message ?: "couldn't load apps")
+                        }
+                }
+            }
+
+            fun loadDir(path: String) {
+                filesLoading = true
+                coroutineScope.launch {
+                    runCatching { client.sendCommand(pairedToken, "list_dir", buildJsonObject { put("path", path) }) }
+                        .onSuccess { response ->
+                            filesLoading = false
+                            if (response.ok) {
+                                fileEntries = Json.decodeFromJsonElement(ListDirResult.serializer(), response.result).entries
+                            } else {
+                                snackbarHostState.showSnackbar(response.error ?: "couldn't list '$path'")
+                            }
+                        }
+                        .onFailure { throwable ->
+                            filesLoading = false
+                            snackbarHostState.showSnackbar(throwable.message ?: "couldn't list '$path'")
                         }
                 }
             }
@@ -158,6 +187,11 @@ class MainActivity : ComponentActivity() {
                                     screen = Screen.Apps
                                     loadApps()
                                 },
+                                onOpenFiles = {
+                                    screen = Screen.Files
+                                    filesPathStack = emptyList()
+                                    loadDir("")
+                                },
                                 onDisconnect = {
                                     client.disconnect()
                                     connectionState = ConnectionState.DISCONNECTED
@@ -179,6 +213,23 @@ class MainActivity : ComponentActivity() {
                             onLaunch = { app ->
                                 runCommand("app_launch", buildJsonObject { put("app_id", app.appId) })
                                 coroutineScope.launch { snackbarHostState.showSnackbar("Launching ${app.name}") }
+                            },
+                            onBack = { screen = Screen.Dashboard },
+                        )
+
+                        Screen.Files -> FilesScreen(
+                            snackbarHostState = snackbarHostState,
+                            isLoading = filesLoading,
+                            currentPath = filesPathStack.lastOrNull() ?: "",
+                            entries = fileEntries,
+                            canGoUp = filesPathStack.isNotEmpty(),
+                            onOpenEntry = { entry ->
+                                filesPathStack = filesPathStack + entry.path
+                                loadDir(entry.path)
+                            },
+                            onNavigateUp = {
+                                filesPathStack = filesPathStack.dropLast(1)
+                                loadDir(filesPathStack.lastOrNull() ?: "")
                             },
                             onBack = { screen = Screen.Dashboard },
                         )

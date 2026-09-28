@@ -46,6 +46,7 @@ fun DashboardScreen(
     onWifiToggle: (Boolean) -> Unit,
     onBluetoothToggle: (Boolean) -> Unit,
     onOpenApps: () -> Unit,
+    onOpenFiles: () -> Unit,
     onDisconnect: () -> Unit,
     onVolumeUp: () -> Unit,
     onVolumeDown: () -> Unit,
@@ -177,6 +178,18 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = onOpenApps, modifier = Modifier.fillMaxWidth()) {
                         Text("Browse & launch apps")
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "Files", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = onOpenFiles, modifier = Modifier.fillMaxWidth()) {
+                        Text("Browse files")
                     }
                 }
             }

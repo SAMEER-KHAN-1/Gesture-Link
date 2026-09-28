@@ -90,6 +90,7 @@ All messages are JSON over the single WebSocket connection.
 | `media_play_pause` | –                        | presses the play/pause media key                 |
 | `media_next`     | –                          | presses the next-track media key                 |
 | `media_previous` | –                          | presses the previous-track media key             |
+| `list_dir`       | `{ "path": "" }`           | lists a directory's contents (empty path = drives) |
 
 More actions (file transfer, mouse/keyboard input) will be added the same way as the project grows — this table is the contract both sides code against, so it's kept up to date whenever an action is added or changed.
 

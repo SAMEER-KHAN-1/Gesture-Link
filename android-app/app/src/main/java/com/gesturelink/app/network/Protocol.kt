@@ -44,3 +44,15 @@ data class SystemStats(
     @SerialName("battery_percent") val batteryPercent: Double? = null,
     @SerialName("battery_plugged") val batteryPlugged: Boolean? = null,
 )
+
+/** One drive/folder/file entry in the `result` payload for the `list_dir` action. */
+@Serializable
+data class FileEntry(
+    val name: String,
+    val path: String,
+    @SerialName("is_dir") val isDir: Boolean,
+    val size: Long? = null,
+)
+
+@Serializable
+data class ListDirResult(val path: String = "", val entries: List<FileEntry> = emptyList())

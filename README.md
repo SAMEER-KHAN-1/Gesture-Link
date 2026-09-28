@@ -24,11 +24,14 @@ Control your Windows PC from your Android phone over your local network — powe
 **Dashboard**
 - Live CPU / RAM / battery stats
 
+**Files**
+- Browse the PC's drives and folders
+
 **Pairing**
 - Scan a QR code shown on the PC (or enter its IP + token by hand)
 
 **Planned next**
-- File browser / quick file transfer
+- Download a file from the PC to the phone
 - Mouse/keyboard remote input
 
 ## How it works
