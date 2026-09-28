@@ -12,12 +12,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.weight
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -29,8 +35,11 @@ fun TouchpadScreen(
     onMove: (dx: Int, dy: Int) -> Unit,
     onClick: (button: String) -> Unit,
     onScroll: (ticks: Int) -> Unit,
+    onTypeText: (text: String) -> Unit,
+    onKeyPress: (key: String) -> Unit,
     onBack: () -> Unit,
 ) {
+    var text by remember { mutableStateOf("") }
     Scaffold(
         topBar = {
             Row(
@@ -88,6 +97,40 @@ fun TouchpadScreen(
             ) {
                 OutlinedButton(onClick = { onScroll(-1) }, modifier = Modifier.weight(1f)) { Text("Scroll up") }
                 OutlinedButton(onClick = { onScroll(1) }, modifier = Modifier.weight(1f)) { Text("Scroll down") }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text("Type on PC") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                )
+                Button(
+                    onClick = {
+                        if (text.isNotEmpty()) {
+                            onTypeText(text)
+                            text = ""
+                        }
+                    },
+                ) { Text("Send") }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                OutlinedButton(onClick = { onKeyPress("enter") }, modifier = Modifier.weight(1f)) { Text("Enter") }
+                OutlinedButton(onClick = { onKeyPress("backspace") }, modifier = Modifier.weight(1f)) { Text("Backspace") }
+                OutlinedButton(onClick = { onKeyPress("escape") }, modifier = Modifier.weight(1f)) { Text("Esc") }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

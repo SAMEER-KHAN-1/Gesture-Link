@@ -279,6 +279,12 @@ class MainActivity : ComponentActivity() {
                             onScroll = { ticks ->
                                 runCommand("mouse_scroll", buildJsonObject { put("ticks", ticks) })
                             },
+                            onTypeText = { text ->
+                                runCommand("keyboard_type", buildJsonObject { put("text", text) })
+                            },
+                            onKeyPress = { key ->
+                                runCommand("keyboard_key", buildJsonObject { put("key", key) })
+                            },
                             onBack = { screen = Screen.Dashboard },
                         )
 

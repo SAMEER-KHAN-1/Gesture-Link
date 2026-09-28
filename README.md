@@ -30,12 +30,10 @@ Control your Windows PC from your Android phone over your local network — powe
 
 **Touchpad**
 - Drag to move the mouse, tap to left/right click, scroll up/down
+- Type text on the PC, or send Enter/Backspace/Escape
 
 **Pairing**
 - Scan a QR code shown on the PC (or enter its IP + token by hand)
-
-**Planned next**
-- Keyboard remote input
 
 ## How it works
 
