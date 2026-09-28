@@ -26,12 +26,12 @@ Control your Windows PC from your Android phone over your local network — powe
 
 **Files**
 - Browse the PC's drives and folders
+- Download a file from the PC to the phone (15MB limit)
 
 **Pairing**
 - Scan a QR code shown on the PC (or enter its IP + token by hand)
 
 **Planned next**
-- Download a file from the PC to the phone
 - Mouse/keyboard remote input
 
 ## How it works

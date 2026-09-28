@@ -38,7 +38,7 @@ http://<pc-lan-ip>:8765/health
 - Apps: `apps_list`, `app_launch`
 - System: `system_stats`
 - Media: `volume_up`, `volume_down`, `volume_mute_toggle`, `media_play_pause`, `media_next`, `media_previous`
-- Files: `list_dir`
+- Files: `list_dir`, `download_file`
 
 Full protocol/action reference lives in [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
 

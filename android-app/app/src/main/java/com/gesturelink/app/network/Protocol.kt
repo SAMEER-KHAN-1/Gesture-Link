@@ -56,3 +56,11 @@ data class FileEntry(
 
 @Serializable
 data class ListDirResult(val path: String = "", val entries: List<FileEntry> = emptyList())
+
+/** Shape of the `result` payload for the `download_file` action. */
+@Serializable
+data class DownloadFileResult(
+    val name: String,
+    val size: Long,
+    @SerialName("data_base64") val dataBase64: String,
+)

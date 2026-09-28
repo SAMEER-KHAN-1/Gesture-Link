@@ -41,6 +41,7 @@ fun FilesScreen(
     currentPath: String,
     entries: List<FileEntry>,
     canGoUp: Boolean,
+    downloadingPath: String?,
     onOpenEntry: (FileEntry) -> Unit,
     onNavigateUp: () -> Unit,
     onBack: () -> Unit,
@@ -90,18 +91,22 @@ fun FilesScreen(
                 }
                 else -> LazyColumn {
                     items(entries, key = { it.path }) { entry ->
-                        val rowModifier = if (entry.isDir) {
-                            Modifier.fillMaxWidth().clickable { onOpenEntry(entry) }
-                        } else {
-                            Modifier.fillMaxWidth()
-                        }
+                        val isDownloading = entry.path == downloadingPath
                         Row(
-                            modifier = rowModifier.padding(vertical = 14.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = !isDownloading) { onOpenEntry(entry) }
+                                .padding(vertical = 14.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Text(text = if (entry.isDir) "${entry.name}/" else entry.name)
-                            if (!entry.isDir && entry.size != null) {
-                                Text(
+                            when {
+                                isDownloading -> Text(
+                                    text = "Downloading...",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                !entry.isDir && entry.size != null -> Text(
                                     text = formatSize(entry.size),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,

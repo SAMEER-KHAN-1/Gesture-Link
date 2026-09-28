@@ -14,11 +14,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.gesturelink.app.data.FileSaver
 import com.gesturelink.app.data.PairingInfo
 import com.gesturelink.app.data.PairingStore
 import com.gesturelink.app.network.AppInfo
 import com.gesturelink.app.network.AppsListResult
 import com.gesturelink.app.network.ConnectionState
+import com.gesturelink.app.network.DownloadFileResult
 import com.gesturelink.app.network.FileEntry
 import com.gesturelink.app.network.GestureLinkClient
 import com.gesturelink.app.network.ListDirResult
@@ -75,6 +77,7 @@ class MainActivity : ComponentActivity() {
             var filesPathStack by remember { mutableStateOf(listOf<String>()) }
             var fileEntries by remember { mutableStateOf<List<FileEntry>>(emptyList()) }
             var filesLoading by remember { mutableStateOf(false) }
+            var downloadingPath by remember { mutableStateOf<String?>(null) }
 
             val snackbarHostState = remember { SnackbarHostState() }
             val coroutineScope = rememberCoroutineScope()
@@ -133,6 +136,30 @@ class MainActivity : ComponentActivity() {
                         .onFailure { throwable ->
                             filesLoading = false
                             snackbarHostState.showSnackbar(throwable.message ?: "couldn't list '$path'")
+                        }
+                }
+            }
+
+            fun downloadFile(entry: FileEntry) {
+                downloadingPath = entry.path
+                coroutineScope.launch {
+                    runCatching { client.sendCommand(pairedToken, "download_file", buildJsonObject { put("path", entry.path) }) }
+                        .onSuccess { response ->
+                            downloadingPath = null
+                            if (response.ok) {
+                                val result = Json.decodeFromJsonElement(DownloadFileResult.serializer(), response.result)
+                                FileSaver.saveToDownloads(applicationContext, result.name, result.dataBase64)
+                                    .onSuccess { snackbarHostState.showSnackbar("Saved ${result.name} to Downloads") }
+                                    .onFailure { throwable ->
+                                        snackbarHostState.showSnackbar(throwable.message ?: "couldn't save ${result.name}")
+                                    }
+                            } else {
+                                snackbarHostState.showSnackbar(response.error ?: "couldn't download '${entry.name}'")
+                            }
+                        }
+                        .onFailure { throwable ->
+                            downloadingPath = null
+                            snackbarHostState.showSnackbar(throwable.message ?: "couldn't download '${entry.name}'")
                         }
                 }
             }
@@ -223,9 +250,14 @@ class MainActivity : ComponentActivity() {
                             currentPath = filesPathStack.lastOrNull() ?: "",
                             entries = fileEntries,
                             canGoUp = filesPathStack.isNotEmpty(),
+                            downloadingPath = downloadingPath,
                             onOpenEntry = { entry ->
-                                filesPathStack = filesPathStack + entry.path
-                                loadDir(entry.path)
+                                if (entry.isDir) {
+                                    filesPathStack = filesPathStack + entry.path
+                                    loadDir(entry.path)
+                                } else {
+                                    downloadFile(entry)
+                                }
                             },
                             onNavigateUp = {
                                 filesPathStack = filesPathStack.dropLast(1)
