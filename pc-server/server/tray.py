@@ -10,6 +10,7 @@ import pystray
 import uvicorn
 from PIL import Image, ImageDraw
 
+from server import startup
 from server.config import get_app_data_dir, load_config
 from server.pairing_qr import show_pairing_qr
 
@@ -37,6 +38,7 @@ class ServerTray:
                 pystray.MenuItem(self._token_label, None, enabled=False),
                 pystray.MenuItem("Show pairing QR code", self._show_qr),
                 pystray.MenuItem("Open config folder", self._open_config_folder),
+                pystray.MenuItem("Start with Windows", self._toggle_autostart, checked=self._is_autostart_enabled),
                 pystray.MenuItem("Quit", self._quit),
             ),
         )
@@ -49,6 +51,12 @@ class ServerTray:
 
     def _open_config_folder(self, icon, item) -> None:
         webbrowser.open(str(get_app_data_dir()))
+
+    def _is_autostart_enabled(self, item) -> bool:
+        return startup.is_enabled()
+
+    def _toggle_autostart(self, icon, item) -> None:
+        startup.set_enabled(not startup.is_enabled())
 
     def _quit(self, icon, item) -> None:
         if self._server is not None:

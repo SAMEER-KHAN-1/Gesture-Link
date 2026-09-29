@@ -22,6 +22,7 @@ First run creates a config file (host, port, pairing token) in `%LOCALAPPDATA%\G
 Running it opens a tray icon (bottom-right, near the clock) instead of a plain console window. Right-click it to:
 - see the current pairing token (needed once, in the Android app)
 - open the config folder
+- toggle "Start with Windows" (adds/removes itself from the `HKCU\...\Run` registry key - no need to manually drop a shortcut in `shell:startup` anymore)
 - quit the server
 
 Once it's running, check it's alive from any browser on the same network:
@@ -63,4 +64,4 @@ pip install -r requirements-build.txt
 ./build.ps1
 ```
 
-That's `pyinstaller --clean gesturelink.spec` under the hood. Output lands at `dist/GestureLink.exe` — a windowed app (no console), still shows the same tray icon, still creates its config the same way on first run. Copy it into `shell:startup` (Win+R → `shell:startup`) if you want it to launch automatically when you log in.
+That's `pyinstaller --clean gesturelink.spec` under the hood. Output lands at `dist/GestureLink.exe` — a windowed app (no console), still shows the same tray icon, still creates its config the same way on first run. Run it once and flip "Start with Windows" in the tray menu if you want it to launch automatically when you log in - no need to drop a shortcut in `shell:startup` by hand.
