@@ -30,7 +30,7 @@ Control your Windows PC from your Android phone over your local network — powe
 - Upload a file from the phone into the folder you're browsing (15MB limit)
 
 **Touchpad**
-- Drag to move the mouse, tap to left/right click, scroll up/down
+- Drag to move the mouse (adjustable sensitivity), tap to left/right click, scroll up/down
 - Type text on the PC, or send Enter/Backspace/Escape
 
 **Pairing**

@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -40,6 +41,7 @@ fun TouchpadScreen(
     onBack: () -> Unit,
 ) {
     var text by remember { mutableStateOf("") }
+    var sensitivity by remember { mutableStateOf(1f) }
     Scaffold(
         topBar = {
             Row(
@@ -68,7 +70,7 @@ fun TouchpadScreen(
                     .pointerInput(Unit) {
                         detectDragGestures { change, dragAmount ->
                             change.consume()
-                            onMove(dragAmount.x.roundToInt(), dragAmount.y.roundToInt())
+                            onMove((dragAmount.x * sensitivity).roundToInt(), (dragAmount.y * sensitivity).roundToInt())
                         }
                     },
                 contentAlignment = Alignment.Center,
@@ -79,7 +81,27 @@ fun TouchpadScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(text = "Sensitivity", style = MaterialTheme.typography.bodySmall)
+                Slider(
+                    value = sensitivity,
+                    onValueChange = { sensitivity = it },
+                    valueRange = 0.5f..3f,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = "%.1fx".format(sensitivity),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
