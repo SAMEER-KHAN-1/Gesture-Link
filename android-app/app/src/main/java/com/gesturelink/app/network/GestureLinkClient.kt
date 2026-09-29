@@ -42,15 +42,24 @@ class GestureLinkClient {
         onStateChanged(state)
 
         val request = Request.Builder().url("ws://$host:$port/ws").build()
-        webSocket = httpClient.newWebSocket(
+        val newWebSocket = httpClient.newWebSocket(
             request,
             object : WebSocketListener() {
-                override fun onOpen(webSocket: WebSocket, response: Response) {
+                // A manual disconnect() nulls out our `webSocket` field immediately, but
+                // OkHttp still delivers this listener's onClosed/onFailure asynchronously
+                // afterward for the socket it was closing. Without this check, that stale
+                // callback would fire onStateChanged(DISCONNECTED) a moment after a
+                // deliberate disconnect and show a bogus "couldn't reach the PC" error.
+                fun isStale(socket: WebSocket) = socket !== webSocket
+
+                override fun onOpen(socket: WebSocket, response: Response) {
+                    if (isStale(socket)) return
                     state = ConnectionState.CONNECTED
                     onStateChanged(state)
                 }
 
-                override fun onMessage(webSocket: WebSocket, text: String) {
+                override fun onMessage(socket: WebSocket, text: String) {
+                    if (isStale(socket)) return
                     val element = runCatching { json.parseToJsonElement(text) }.getOrNull() as? JsonObject ?: return
 
                     // Pushes have no matching request id - a CommandResponse always does -
@@ -66,17 +75,30 @@ class GestureLinkClient {
                     pendingRequests.remove(response.id)?.resume(response)
                 }
 
-                override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                override fun onClosed(socket: WebSocket, code: Int, reason: String) {
+                    if (isStale(socket)) return
                     state = ConnectionState.DISCONNECTED
+                    failPendingRequests()
                     onStateChanged(state)
                 }
 
-                override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                override fun onFailure(socket: WebSocket, t: Throwable, response: Response?) {
+                    if (isStale(socket)) return
                     state = ConnectionState.DISCONNECTED
+                    failPendingRequests()
                     onStateChanged(state)
                 }
             },
         )
+        webSocket = newWebSocket
+    }
+
+    /** Without this, a request in flight when the connection drops would suspend
+     * forever - nothing else is ever going to resume it. */
+    private fun failPendingRequests() {
+        val stillWaiting = pendingRequests.values.toList()
+        pendingRequests.clear()
+        stillWaiting.forEach { it.resumeWithException(IllegalStateException("connection lost")) }
     }
 
     suspend fun sendCommand(

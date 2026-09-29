@@ -11,7 +11,7 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 ## What's here so far
 
 - Project skeleton - Gradle setup, manifest, placeholder launcher icon
-- `network/` - `GestureLinkClient`, a small OkHttp WebSocket wrapper that speaks the same JSON protocol as the PC server (`Protocol.kt` mirrors `server/protocol.py`)
+- `network/` - `GestureLinkClient`, a small OkHttp WebSocket wrapper that speaks the same JSON protocol as the PC server (`Protocol.kt` mirrors `server/protocol.py`). Tells push messages from command responses apart, fails any in-flight request rather than hanging it forever if the connection drops, and ignores stale callbacks left over from a connection that was already intentionally closed
 - `data/PairingStore.kt` - remembers the last PC (IP + token) that paired successfully, so the app can reconnect without re-entering it
 - `ui/PairingScreen.kt` - enter the PC's IP and pairing token, hit Connect, see whether it worked
 - `ui/DashboardScreen.kt` - power controls (shutdown/restart behind a confirmation dialog, sleep, lock, cancel pending shutdown), wifi/bluetooth switches, volume/media buttons, a live CPU/RAM/battery card, and disconnect/forget-this-PC actions
@@ -20,7 +20,7 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - `ui/TouchpadScreen.kt` - a drag surface that moves the PC's mouse cursor (with a sensitivity slider), left/right click and scroll buttons, plus a text field to type on the PC and send Enter/Backspace/Escape
 - `data/FileSaver.kt` - decodes a downloaded file and saves it into the device's Downloads folder via MediaStore (API 29+)
 - `data/FileSender.kt` - reads a file picked via the system document picker into base64, ready to upload
-- `MainActivity.kt` - a small in-memory screen state machine (Pairing → Dashboard → Apps/Files/Touchpad) wiring all of the above to `GestureLinkClient`, plus a 5s poll loop for system stats while the dashboard is visible. Auto-reconnects to the last paired PC on launch, falling back to the pairing screen if that fails
+- `MainActivity.kt` - a small in-memory screen state machine (Pairing → Dashboard → Apps/Files/Touchpad) wiring all of the above to `GestureLinkClient`, plus a 5s poll loop for system stats while the dashboard is visible. Auto-reconnects to the last paired PC on launch, and drops back to the pairing screen with an explanation any time the connection is actually lost (not just on the first failed attempt)
 
 This now covers the full v1 feature set end to end: pair, then shut down / restart / sleep / lock the PC, flip wifi/bluetooth, control volume/media, launch apps, browse/download its files, and drive the mouse and keyboard, all from the phone.
 

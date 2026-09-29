@@ -167,8 +167,13 @@ class MainActivity : ComponentActivity() {
                                     savedInfo = info
                                     screen = Screen.Dashboard
                                 }
-                                ConnectionState.DISCONNECTED ->
+                                ConnectionState.DISCONNECTED -> {
+                                    // Also covers a connection dropping mid-use (not just a failed
+                                    // pairing attempt) - GestureLinkClient only calls this for a real
+                                    // loss, never for a deliberate disconnect() (see its isStale check).
                                     errorMessage = "Couldn't reach the PC - check the IP and that the server is running."
+                                    screen = Screen.Pairing
+                                }
                                 else -> Unit
                             }
                         }
