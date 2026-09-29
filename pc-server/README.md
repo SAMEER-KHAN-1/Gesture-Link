@@ -44,6 +44,15 @@ http://<pc-lan-ip>:8765/health
 
 Full protocol/action reference lives in [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
 
+## Tests
+
+```
+pip install -r requirements-dev.txt
+pytest
+```
+
+Covers the action handlers in `server/actions/` and the websocket message handling in `server/main.py`, including auth (`server/auth.py`). Anything that touches real hardware (mouse/keyboard input, media keys, power, radios) is tested through a mocked `ctypes`/`subprocess` boundary rather than actually run - the tests move no mouse, press no keys, and shut nothing down.
+
 ## Packaging to a standalone .exe
 
 For actually running this day-to-day you don't want to open a terminal and `python run.py` every time - PyInstaller bundles it into one `.exe` that runs on its own.
