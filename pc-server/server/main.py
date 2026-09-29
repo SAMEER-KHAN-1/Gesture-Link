@@ -10,7 +10,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
 from server.actions import get_handler
-from server.auth import is_token_valid
+from server.auth import is_locked_out, is_token_valid
 from server.config import load_config
 from server.protocol import CommandRequest, CommandResponse
 from server.ws_manager import manager
@@ -33,23 +33,29 @@ def health():
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
+    client_address = websocket.client.host if websocket.client else "unknown"
     try:
         while True:
             raw = await websocket.receive_text()
-            response = await handle_message(raw)
+            response = await handle_message(raw, client_address)
             await websocket.send_text(response.model_dump_json())
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
 
-async def handle_message(raw: str) -> CommandResponse:
+async def handle_message(raw: str, client_address: str) -> CommandResponse:
     try:
         data = json.loads(raw)
         request = CommandRequest(**data)
     except (json.JSONDecodeError, ValidationError):
         return CommandResponse(id="unknown", ok=False, action="unknown", error="malformed request")
 
-    if not is_token_valid(request.token):
+    if is_locked_out(client_address):
+        return CommandResponse(
+            id=request.id, ok=False, action=request.action, error="too many failed attempts, try again shortly"
+        )
+
+    if not is_token_valid(request.token, client_address):
         return CommandResponse(id=request.id, ok=False, action=request.action, error="invalid pairing token")
 
     handler = get_handler(request.action)

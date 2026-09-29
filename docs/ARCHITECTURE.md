@@ -30,6 +30,7 @@ Commands are one-off, but we want the PC to be able to push things back to the p
 - LAN-only. The server binds to the local network interface, not a public address.
 - Token-based auth: every message must include the token; the server drops/rejects any socket that hasn't authenticated within a few seconds of connecting.
 - The token is generated locally on the PC (not hardcoded), stored in a git-ignored local config file, and shown to the user once so they can enter it in the app.
+- Brute-force guard: 5 wrong tokens from the same address locks that address out for 30 seconds before it can try again.
 - No remote/internet relay in v1. If remote control off-LAN is wanted later, that's a deliberate opt-in addition (e.g. via the user's own VPN), not a default.
 
 This is intentionally a "trusted home network" threat model, not a hardened public-internet service — it's a personal remote for your own devices.
