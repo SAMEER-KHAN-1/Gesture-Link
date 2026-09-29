@@ -28,15 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.gesturelink.app.network.FileEntry
-import kotlin.math.log10
-import kotlin.math.pow
-
-private fun formatSize(bytes: Long): String {
-    if (bytes < 1024) return "$bytes B"
-    val unit = (log10(bytes.toDouble()) / log10(1024.0)).toInt().coerceAtMost(3)
-    val value = bytes / 1024.0.pow(unit.toDouble())
-    return "%.1f %s".format(value, arrayOf("KB", "MB", "GB", "TB")[unit - 1])
-}
+import com.gesturelink.app.util.formatFileSize
 
 @Composable
 fun FilesScreen(
@@ -121,7 +113,7 @@ fun FilesScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                                 !entry.isDir && entry.size != null -> Text(
-                                    text = formatSize(entry.size),
+                                    text = formatFileSize(entry.size),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )

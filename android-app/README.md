@@ -20,9 +20,14 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - `ui/TouchpadScreen.kt` - a drag surface that moves the PC's mouse cursor (with a sensitivity slider), left/right click and scroll buttons, plus a text field to type on the PC and send Enter/Backspace/Escape
 - `data/FileSaver.kt` - decodes a downloaded file and saves it into the device's Downloads folder via MediaStore (API 29+)
 - `data/FileSender.kt` - reads a file picked via the system document picker into base64, ready to upload
+- `util/FormatUtils.kt` - small pure formatting helpers (currently just file sizes), pulled out of `FilesScreen.kt` so they're unit-testable
 - `MainActivity.kt` - a small in-memory screen state machine (Pairing → Dashboard → Apps/Files/Touchpad) wiring all of the above to `GestureLinkClient`, plus a 5s poll loop for system stats while the dashboard is visible. Auto-reconnects to the last paired PC on launch, and drops back to the pairing screen with an explanation any time the connection is actually lost (not just on the first failed attempt)
 
 This now covers the full v1 feature set end to end: pair, then shut down / restart / sleep / lock the PC, flip wifi/bluetooth, control volume/media, launch apps, browse/download its files, and drive the mouse and keyboard, all from the phone.
+
+## Tests
+
+Plain JVM unit tests (no emulator/device needed) live under `app/src/test/` and run with `./gradlew test`. So far that's just `util/FormatUtilsTest.kt` - most of this app's logic lives in Composables or needs a live `GestureLinkClient`/Android framework, which need an instrumented test setup (not added yet); pure, framework-free logic gets covered here as it's extracted.
 
 ## Structure
 
