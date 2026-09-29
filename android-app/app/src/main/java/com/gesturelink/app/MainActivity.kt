@@ -1,5 +1,6 @@
 package com.gesturelink.app
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,6 +16,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.gesturelink.app.data.FileSaver
+import com.gesturelink.app.data.FileSender
 import com.gesturelink.app.data.PairingInfo
 import com.gesturelink.app.data.PairingStore
 import com.gesturelink.app.network.AppInfo
@@ -200,6 +202,47 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            fun uploadFile(uri: Uri) {
+                val targetDir = filesPathStack.lastOrNull()
+                if (targetDir.isNullOrEmpty()) {
+                    coroutineScope.launch { snackbarHostState.showSnackbar("Open a folder first") }
+                    return
+                }
+
+                FileSender.read(applicationContext, uri)
+                    .onSuccess { picked ->
+                        coroutineScope.launch {
+                            runCatching {
+                                client.sendCommand(
+                                    pairedToken,
+                                    "upload_file",
+                                    buildJsonObject {
+                                        put("dir", targetDir)
+                                        put("name", picked.name)
+                                        put("data_base64", picked.base64Data)
+                                    },
+                                )
+                            }
+                                .onSuccess { response ->
+                                    if (response.ok) {
+                                        snackbarHostState.showSnackbar("Uploaded ${picked.name}")
+                                        loadDir(targetDir)
+                                    } else {
+                                        snackbarHostState.showSnackbar(response.error ?: "couldn't upload '${picked.name}'")
+                                    }
+                                }
+                                .onFailure { throwable ->
+                                    snackbarHostState.showSnackbar(throwable.message ?: "couldn't upload '${picked.name}'")
+                                }
+                        }
+                    }
+                    .onFailure { throwable ->
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar(throwable.message ?: "couldn't read the picked file")
+                        }
+                    }
+            }
+
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     when (screen) {
@@ -318,6 +361,7 @@ class MainActivity : ComponentActivity() {
                                 filesPathStack = filesPathStack.dropLast(1)
                                 loadDir(filesPathStack.lastOrNull() ?: "")
                             },
+                            onUploadFile = { uri -> uploadFile(uri) },
                             onBack = { screen = Screen.Dashboard },
                         )
 

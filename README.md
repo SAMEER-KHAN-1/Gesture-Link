@@ -27,6 +27,7 @@ Control your Windows PC from your Android phone over your local network — powe
 **Files**
 - Browse the PC's drives and folders
 - Download a file from the PC to the phone (15MB limit)
+- Upload a file from the phone into the folder you're browsing (15MB limit)
 
 **Touchpad**
 - Drag to move the mouse, tap to left/right click, scroll up/down

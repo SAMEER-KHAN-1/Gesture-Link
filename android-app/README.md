@@ -16,9 +16,10 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - `ui/PairingScreen.kt` - enter the PC's IP and pairing token, hit Connect, see whether it worked
 - `ui/DashboardScreen.kt` - power controls (shutdown/restart behind a confirmation dialog, sleep, lock, cancel pending shutdown), wifi/bluetooth switches, volume/media buttons, a live CPU/RAM/battery card, and disconnect/forget-this-PC actions
 - `ui/AppsScreen.kt` - fetches the PC's app list, searchable, tap an app to launch it remotely
-- `ui/FilesScreen.kt` - browses the PC's drives and folders (breadcrumb-free, just an Up button and a path stack), tap a file to download it
+- `ui/FilesScreen.kt` - browses the PC's drives and folders (breadcrumb-free, just an Up button and a path stack), tap a file to download it, or pick one from the device to upload into the folder you're viewing
 - `ui/TouchpadScreen.kt` - a drag surface that moves the PC's mouse cursor, left/right click and scroll buttons, plus a text field to type on the PC and send Enter/Backspace/Escape
 - `data/FileSaver.kt` - decodes a downloaded file and saves it into the device's Downloads folder via MediaStore (API 29+)
+- `data/FileSender.kt` - reads a file picked via the system document picker into base64, ready to upload
 - `MainActivity.kt` - a small in-memory screen state machine (Pairing → Dashboard → Apps/Files/Touchpad) wiring all of the above to `GestureLinkClient`, plus a 5s poll loop for system stats while the dashboard is visible. Auto-reconnects to the last paired PC on launch, falling back to the pairing screen if that fails
 
 This now covers the full v1 feature set end to end: pair, then shut down / restart / sleep / lock the PC, flip wifi/bluetooth, control volume/media, launch apps, browse/download its files, and drive the mouse and keyboard, all from the phone.

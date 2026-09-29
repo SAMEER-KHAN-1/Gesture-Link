@@ -13,7 +13,8 @@ from server.actions import register
 
 # Files go over the websocket as base64 inside a JSON message, which balloons
 # them by ~33% - keep well clear of typical websocket/JSON message size limits.
-MAX_DOWNLOAD_BYTES = 15 * 1024 * 1024
+# Applies to transfers in both directions (download and upload).
+MAX_TRANSFER_BYTES = 15 * 1024 * 1024
 
 
 def _list_drives() -> list[dict]:
@@ -63,11 +64,42 @@ async def handle_download_file(params: dict) -> dict:
         raise FileNotFoundError(f"'{raw_path}' is not a file")
 
     size = path.stat().st_size
-    if size > MAX_DOWNLOAD_BYTES:
-        limit_mb = MAX_DOWNLOAD_BYTES // (1024 * 1024)
+    if size > MAX_TRANSFER_BYTES:
+        limit_mb = MAX_TRANSFER_BYTES // (1024 * 1024)
         raise ValueError(f"'{path.name}' is over the {limit_mb}MB transfer limit")
 
     # Reading could take a moment for a large-ish file, so don't stall the event
     # loop (and every other connected client) while it happens.
     data = await asyncio.to_thread(path.read_bytes)
     return {"name": path.name, "size": size, "data_base64": base64.b64encode(data).decode("ascii")}
+
+
+@register("upload_file")
+async def handle_upload_file(params: dict) -> dict:
+    raw_dir = params.get("dir")
+    name = params.get("name")
+    data_b64 = params.get("data_base64")
+    if not raw_dir:
+        raise ValueError("dir is required")
+    if not name:
+        raise ValueError("name is required")
+    if not data_b64:
+        raise ValueError("data_base64 is required")
+
+    # "name" must be a bare file name, not a path - otherwise "../../x" or an
+    # absolute path could write outside the chosen directory entirely.
+    if Path(name).name != name or name in (".", ".."):
+        raise ValueError(f"'{name}' is not a valid file name")
+
+    directory = Path(raw_dir)
+    if not directory.is_dir():
+        raise NotADirectoryError(f"'{raw_dir}' is not a directory")
+
+    data = base64.b64decode(data_b64)
+    if len(data) > MAX_TRANSFER_BYTES:
+        limit_mb = MAX_TRANSFER_BYTES // (1024 * 1024)
+        raise ValueError(f"'{name}' is over the {limit_mb}MB transfer limit")
+
+    target = directory / name
+    await asyncio.to_thread(target.write_bytes, data)
+    return {"name": name, "size": len(data)}

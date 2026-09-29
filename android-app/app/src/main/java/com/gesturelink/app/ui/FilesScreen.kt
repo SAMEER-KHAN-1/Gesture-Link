@@ -1,5 +1,8 @@
 package com.gesturelink.app.ui
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
@@ -44,8 +48,13 @@ fun FilesScreen(
     downloadingPath: String?,
     onOpenEntry: (FileEntry) -> Unit,
     onNavigateUp: () -> Unit,
+    onUploadFile: (Uri) -> Unit,
     onBack: () -> Unit,
 ) {
+    val uploadLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let(onUploadFile)
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -78,7 +87,12 @@ fun FilesScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
                 )
+                TextButton(
+                    onClick = { uploadLauncher.launch(arrayOf("*/*")) },
+                    enabled = currentPath.isNotEmpty(),
+                ) { Text("Upload here") }
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 

@@ -62,9 +62,50 @@ def test_download_file_rejects_missing_file(tmp_path):
 
 
 def test_download_file_rejects_files_over_the_size_limit(tmp_path, monkeypatch):
-    monkeypatch.setattr(files, "MAX_DOWNLOAD_BYTES", 10)
+    monkeypatch.setattr(files, "MAX_TRANSFER_BYTES", 10)
     a_file = tmp_path / "big.txt"
     a_file.write_text("this is way more than ten bytes")
 
     with pytest.raises(ValueError):
         run(files.handle_download_file({"path": str(a_file)}))
+
+
+def test_upload_file_writes_decoded_bytes_into_the_target_dir(tmp_path):
+    data = base64.b64encode(b"uploaded content").decode("ascii")
+
+    result = run(files.handle_upload_file({"dir": str(tmp_path), "name": "new.txt", "data_base64": data}))
+
+    assert result == {"name": "new.txt", "size": len(b"uploaded content")}
+    assert (tmp_path / "new.txt").read_bytes() == b"uploaded content"
+
+
+@pytest.mark.parametrize("missing_field", ["dir", "name", "data_base64"])
+def test_upload_file_requires_all_fields(tmp_path, missing_field):
+    params = {"dir": str(tmp_path), "name": "new.txt", "data_base64": base64.b64encode(b"x").decode("ascii")}
+    del params[missing_field]
+
+    with pytest.raises(ValueError):
+        run(files.handle_upload_file(params))
+
+
+@pytest.mark.parametrize("bad_name", ["../escape.txt", "sub/escape.txt", "..", "."])
+def test_upload_file_rejects_names_that_are_not_a_bare_file_name(tmp_path, bad_name):
+    data = base64.b64encode(b"x").decode("ascii")
+
+    with pytest.raises(ValueError):
+        run(files.handle_upload_file({"dir": str(tmp_path), "name": bad_name, "data_base64": data}))
+
+
+def test_upload_file_rejects_a_nonexistent_directory(tmp_path):
+    data = base64.b64encode(b"x").decode("ascii")
+
+    with pytest.raises(NotADirectoryError):
+        run(files.handle_upload_file({"dir": str(tmp_path / "nope"), "name": "new.txt", "data_base64": data}))
+
+
+def test_upload_file_rejects_data_over_the_size_limit(tmp_path, monkeypatch):
+    monkeypatch.setattr(files, "MAX_TRANSFER_BYTES", 10)
+    data = base64.b64encode(b"this is way more than ten bytes").decode("ascii")
+
+    with pytest.raises(ValueError):
+        run(files.handle_upload_file({"dir": str(tmp_path), "name": "big.txt", "data_base64": data}))

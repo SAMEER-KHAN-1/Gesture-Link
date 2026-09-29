@@ -94,6 +94,7 @@ All messages are JSON over the single WebSocket connection.
 | `media_previous` | –                          | presses the previous-track media key             |
 | `list_dir`       | `{ "path": "" }`           | lists a directory's contents (empty path = drives) |
 | `download_file`  | `{ "path": "..." }`        | returns a file's bytes, base64-encoded (15MB limit) |
+| `upload_file`    | `{ "dir": "...", "name": "...", "data_base64": "..." }` | writes a base64-encoded file into `dir` (15MB limit) |
 | `mouse_move`     | `{ "dx": 0, "dy": 0 }`     | moves the cursor relative to its current position |
 | `mouse_click`    | `{ "button": "left" }`     | clicks the left or right mouse button           |
 | `mouse_scroll`   | `{ "ticks": 0 }`           | scrolls the wheel (positive = down, negative = up) |
