@@ -39,6 +39,8 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
 private const val STATS_POLL_INTERVAL_MS = 5000L
@@ -151,23 +153,34 @@ class MainActivity : ComponentActivity() {
             fun connectTo(host: String, token: String) {
                 errorMessage = null
                 pairedToken = token
-                client.connect(host, PairingStore.DEFAULT_PORT) { state ->
-                    // Callback fires on OkHttp's thread, not the main thread.
-                    runOnUiThread {
-                        connectionState = state
-                        when (state) {
-                            ConnectionState.CONNECTED -> {
-                                val info = PairingInfo(host, PairingStore.DEFAULT_PORT, token)
-                                pairingStore.save(info)
-                                savedInfo = info
-                                screen = Screen.Dashboard
+                client.connect(
+                    host = host,
+                    port = PairingStore.DEFAULT_PORT,
+                    onStateChanged = { state ->
+                        // Callback fires on OkHttp's thread, not the main thread.
+                        runOnUiThread {
+                            connectionState = state
+                            when (state) {
+                                ConnectionState.CONNECTED -> {
+                                    val info = PairingInfo(host, PairingStore.DEFAULT_PORT, token)
+                                    pairingStore.save(info)
+                                    savedInfo = info
+                                    screen = Screen.Dashboard
+                                }
+                                ConnectionState.DISCONNECTED ->
+                                    errorMessage = "Couldn't reach the PC - check the IP and that the server is running."
+                                else -> Unit
                             }
-                            ConnectionState.DISCONNECTED ->
-                                errorMessage = "Couldn't reach the PC - check the IP and that the server is running."
-                            else -> Unit
                         }
-                    }
-                }
+                    },
+                    onPush = { push ->
+                        if (push.push == "battery_low") {
+                            val percent = push.data["battery_percent"]?.jsonPrimitive?.intOrNull
+                            val message = if (percent != null) "PC battery low ($percent%)" else "PC battery low"
+                            runOnUiThread { coroutineScope.launch { snackbarHostState.showSnackbar(message) } }
+                        }
+                    },
+                )
             }
 
             // Try the last PC we paired with automatically, so re-opening the app doesn't

@@ -70,6 +70,24 @@ All messages are JSON over the single WebSocket connection.
 - `ok`: whether the action succeeded.
 - `error`: human-readable message when `ok` is `false`, otherwise `null`.
 
+### PC → Phone (push, unprompted)
+
+Not every PC → phone message is a reply. A few things (so far: a low-battery
+notice) are worth telling the phone about the moment they happen rather than
+waiting for it to poll. These have no `id` - the phone tells them apart from
+a response by the presence of the `push` key instead:
+
+```json
+{
+  "push": "battery_low",
+  "data": { "battery_percent": 12 }
+}
+```
+
+| push          | data                        | sent when                                        |
+|---------------|-----------------------------|---------------------------------------------------|
+| `battery_low` | `{ "battery_percent": 12 }` | the battery drops to 15% or below while unplugged, once per episode (not repeated every check until it recovers) |
+
 ### Actions (v1 target set)
 
 | action           | params                     | description                                   |

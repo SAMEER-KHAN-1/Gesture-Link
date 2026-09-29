@@ -18,3 +18,15 @@ class CommandResponse(BaseModel):
     action: str
     result: dict[str, Any] = Field(default_factory=dict)
     error: Optional[str] = None
+
+
+class PushMessage(BaseModel):
+    """Sent unprompted (not in reply to a request) - e.g. a low-battery notice.
+
+    Has no `id` field since nothing on the phone is waiting for a specific
+    response; the phone's websocket listener tells this apart from a
+    CommandResponse by the presence of the `push` key.
+    """
+
+    push: str
+    data: dict[str, Any] = Field(default_factory=dict)

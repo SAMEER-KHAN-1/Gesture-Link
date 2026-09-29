@@ -71,3 +71,14 @@ data class DownloadFileResult(
     val size: Long,
     @SerialName("data_base64") val dataBase64: String,
 )
+
+/**
+ * A message the PC sends unprompted, not in reply to a request - told apart
+ * from a CommandResponse by having no `id` field. See the "Push messages"
+ * section of docs/ARCHITECTURE.md.
+ */
+@Serializable
+data class PushMessage(
+    val push: String,
+    val data: JsonObject = JsonObject(emptyMap()),
+)

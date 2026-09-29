@@ -41,6 +41,7 @@ http://<pc-lan-ip>:8765/health
 - Files: `list_dir`, `download_file`, `upload_file`
 - Mouse: `mouse_move`, `mouse_click`, `mouse_scroll`
 - Keyboard: `keyboard_type`, `keyboard_key`
+- Push notifications (unprompted, not tied to a request): a `battery_low` notice broadcast to every connected phone when the battery drops to 15% or below while unplugged
 
 Full protocol/action reference lives in [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
 
@@ -51,7 +52,7 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-Covers the action handlers in `server/actions/` and the websocket message handling in `server/main.py`, including auth (`server/auth.py`). Anything that touches real hardware (mouse/keyboard input, media keys, power, radios) is tested through a mocked `ctypes`/`subprocess` boundary rather than actually run - the tests move no mouse, press no keys, and shut nothing down.
+Covers the action handlers in `server/actions/`, the websocket message handling in `server/main.py` (including auth in `server/auth.py`), and the battery-low push logic in `server/battery_watch.py`. Anything that touches real hardware (mouse/keyboard input, media keys, power, radios) is tested through a mocked `ctypes`/`subprocess` boundary rather than actually run - the tests move no mouse, press no keys, and shut nothing down.
 
 ## Packaging to a standalone .exe
 

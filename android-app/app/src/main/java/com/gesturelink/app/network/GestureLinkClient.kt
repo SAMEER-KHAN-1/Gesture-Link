@@ -4,6 +4,7 @@ import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -31,7 +32,12 @@ class GestureLinkClient {
     var state: ConnectionState = ConnectionState.DISCONNECTED
         private set
 
-    fun connect(host: String, port: Int, onStateChanged: (ConnectionState) -> Unit) {
+    fun connect(
+        host: String,
+        port: Int,
+        onStateChanged: (ConnectionState) -> Unit,
+        onPush: (PushMessage) -> Unit = {},
+    ) {
         state = ConnectionState.CONNECTING
         onStateChanged(state)
 
@@ -45,9 +51,18 @@ class GestureLinkClient {
                 }
 
                 override fun onMessage(webSocket: WebSocket, text: String) {
-                    val response = runCatching {
-                        json.decodeFromString(CommandResponse.serializer(), text)
-                    }.getOrNull() ?: return
+                    val element = runCatching { json.parseToJsonElement(text) }.getOrNull() as? JsonObject ?: return
+
+                    // Pushes have no matching request id - a CommandResponse always does -
+                    // so the presence of a "push" key is what tells the two apart.
+                    if ("push" in element) {
+                        val push = runCatching { json.decodeFromJsonElement<PushMessage>(element) }.getOrNull()
+                        push?.let(onPush)
+                        return
+                    }
+
+                    val response = runCatching { json.decodeFromJsonElement<CommandResponse>(element) }.getOrNull()
+                        ?: return
                     pendingRequests.remove(response.id)?.resume(response)
                 }
 

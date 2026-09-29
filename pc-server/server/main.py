@@ -4,6 +4,7 @@ Boots the app, exposes a health check, and hosts the /ws endpoint the Android
 app actually talks to for commands.
 """
 
+import asyncio
 import json
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -11,6 +12,7 @@ from pydantic import ValidationError
 
 from server.actions import get_handler
 from server.auth import is_locked_out, is_token_valid
+from server.battery_watch import battery_watch_loop
 from server.config import load_config
 from server.protocol import CommandRequest, CommandResponse
 from server.ws_manager import manager
@@ -19,10 +21,11 @@ app = FastAPI(title="GestureLink PC Server")
 
 
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     config = load_config()
     print(f"[GestureLink] listening on {config['host']}:{config['port']}")
     print(f"[GestureLink] pairing token: {config['pairing_token']}")
+    asyncio.create_task(battery_watch_loop())
 
 
 @app.get("/health")
