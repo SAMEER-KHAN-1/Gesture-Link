@@ -72,6 +72,13 @@ data class DownloadFileResult(
     @SerialName("data_base64") val dataBase64: String,
 )
 
+/** Shape of the `result` payload for the `clipboard_get` action. */
+@Serializable
+data class ClipboardGetResult(
+    val text: String = "",
+    val truncated: Boolean = false,
+)
+
 /**
  * A message the PC sends unprompted, not in reply to a request - told apart
  * from a CommandResponse by having no `id` field. See the "Push messages"

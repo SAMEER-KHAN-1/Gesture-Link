@@ -14,11 +14,12 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - `network/` - `GestureLinkClient`, a small OkHttp WebSocket wrapper that speaks the same JSON protocol as the PC server (`Protocol.kt` mirrors `server/protocol.py`). Tells push messages from command responses apart, fails any in-flight request rather than hanging it forever if the connection drops, and ignores stale callbacks left over from a connection that was already intentionally closed
 - `data/PairingStore.kt` - remembers the last PC (IP + token) that paired successfully, so the app can reconnect without re-entering it
 - `ui/PairingScreen.kt` - enter the PC's IP and pairing token, hit Connect, see whether it worked
-- `ui/DashboardScreen.kt` - power controls (shutdown/restart behind a confirmation dialog, sleep, lock, cancel pending shutdown), wifi/bluetooth switches, volume/media buttons, a live CPU/RAM/battery card, and disconnect/forget-this-PC actions
+- `ui/DashboardScreen.kt` - power controls (shutdown/restart behind a confirmation dialog, sleep, lock, cancel pending shutdown), wifi/bluetooth switches, volume/media buttons, clipboard send/get buttons, a live CPU/RAM/battery card, and disconnect/forget-this-PC actions
 - `ui/AppsScreen.kt` - fetches the PC's app list, searchable, tap an app to launch it remotely
 - `ui/FilesScreen.kt` - browses the PC's drives and folders (breadcrumb-free, just an Up button and a path stack), tap a file to download it, or pick one from the device to upload into the folder you're viewing
 - `ui/TouchpadScreen.kt` - a drag surface that moves the PC's mouse cursor (with a sensitivity slider), left/right click and scroll buttons, plus a text field to type on the PC and send Enter/Backspace/Escape
 - `data/FileSaver.kt` - decodes a downloaded file and saves it into the device's Downloads folder via MediaStore (API 29+)
+- `data/ClipboardHelper.kt` - reads and writes the device's plain-text clipboard, used by the dashboard's clipboard card to sync text with the PC
 - `data/FileSender.kt` - reads a file picked via the system document picker into base64, ready to upload
 - `util/FormatUtils.kt` - small pure formatting helpers (currently just file sizes), pulled out of `FilesScreen.kt` so they're unit-testable
 - `MainActivity.kt` - a small in-memory screen state machine (Pairing → Dashboard → Apps/Files/Touchpad) wiring all of the above to `GestureLinkClient`, plus a 5s poll loop for system stats while the dashboard is visible. Auto-reconnects to the last paired PC on launch, and drops back to the pairing screen with an explanation any time the connection is actually lost (not just on the first failed attempt)

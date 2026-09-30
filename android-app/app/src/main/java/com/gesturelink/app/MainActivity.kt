@@ -15,12 +15,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.gesturelink.app.data.ClipboardHelper
 import com.gesturelink.app.data.FileSaver
 import com.gesturelink.app.data.FileSender
 import com.gesturelink.app.data.PairingInfo
 import com.gesturelink.app.data.PairingStore
 import com.gesturelink.app.network.AppInfo
 import com.gesturelink.app.network.AppsListResult
+import com.gesturelink.app.network.ClipboardGetResult
 import com.gesturelink.app.network.ConnectionState
 import com.gesturelink.app.network.DownloadFileResult
 import com.gesturelink.app.network.FileEntry
@@ -108,6 +110,49 @@ class MainActivity : ComponentActivity() {
                         .onFailure { throwable ->
                             onFailureRevert?.invoke()
                             snackbarHostState.showSnackbar(throwable.message ?: "'$action' failed")
+                        }
+                }
+            }
+
+            fun sendClipboardToPc() {
+                val text = ClipboardHelper.readText(applicationContext)
+                if (text.isNullOrEmpty()) {
+                    coroutineScope.launch { snackbarHostState.showSnackbar("Phone clipboard is empty") }
+                    return
+                }
+                coroutineScope.launch {
+                    runCatching { client.sendCommand(pairedToken, "clipboard_set", buildJsonObject { put("text", text) }) }
+                        .onSuccess { response ->
+                            snackbarHostState.showSnackbar(
+                                if (response.ok) "Sent clipboard to PC" else response.error ?: "couldn't send clipboard",
+                            )
+                        }
+                        .onFailure { throwable ->
+                            snackbarHostState.showSnackbar(throwable.message ?: "couldn't send clipboard")
+                        }
+                }
+            }
+
+            fun fetchPcClipboard() {
+                coroutineScope.launch {
+                    runCatching { client.sendCommand(pairedToken, "clipboard_get") }
+                        .onSuccess { response ->
+                            if (!response.ok) {
+                                snackbarHostState.showSnackbar(response.error ?: "couldn't read the PC clipboard")
+                                return@onSuccess
+                            }
+                            val result = Json.decodeFromJsonElement(ClipboardGetResult.serializer(), response.result)
+                            if (result.text.isEmpty()) {
+                                snackbarHostState.showSnackbar("PC clipboard has no text")
+                            } else {
+                                ClipboardHelper.writeText(applicationContext, result.text)
+                                snackbarHostState.showSnackbar(
+                                    if (result.truncated) "Copied from PC (text was cut off - too long)" else "Copied from PC",
+                                )
+                            }
+                        }
+                        .onFailure { throwable ->
+                            snackbarHostState.showSnackbar(throwable.message ?: "couldn't read the PC clipboard")
                         }
                 }
             }
@@ -346,6 +391,8 @@ class MainActivity : ComponentActivity() {
                                 onMediaPrevious = { runCommand("media_previous") },
                                 onMediaPlayPause = { runCommand("media_play_pause") },
                                 onMediaNext = { runCommand("media_next") },
+                                onSendClipboardToPc = { sendClipboardToPc() },
+                                onFetchPcClipboard = { fetchPcClipboard() },
                             )
                         }
 

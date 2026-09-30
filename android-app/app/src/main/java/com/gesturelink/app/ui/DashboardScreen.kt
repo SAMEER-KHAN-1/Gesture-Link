@@ -56,6 +56,8 @@ fun DashboardScreen(
     onMediaPrevious: () -> Unit,
     onMediaPlayPause: () -> Unit,
     onMediaNext: () -> Unit,
+    onSendClipboardToPc: () -> Unit,
+    onFetchPcClipboard: () -> Unit,
 ) {
     var pendingConfirm by remember { mutableStateOf<ConfirmAction?>(null) }
 
@@ -171,6 +173,26 @@ fun DashboardScreen(
                         OutlinedButton(onClick = onMediaPrevious, modifier = Modifier.weight(1f)) { Text("<<") }
                         OutlinedButton(onClick = onMediaPlayPause, modifier = Modifier.weight(1f)) { Text("Play/Pause") }
                         OutlinedButton(onClick = onMediaNext, modifier = Modifier.weight(1f)) { Text(">>") }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "Clipboard", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        OutlinedButton(onClick = onSendClipboardToPc, modifier = Modifier.weight(1f)) {
+                            Text("Send to PC")
+                        }
+                        OutlinedButton(onClick = onFetchPcClipboard, modifier = Modifier.weight(1f)) {
+                            Text("Get from PC")
+                        }
                     }
                 }
             }

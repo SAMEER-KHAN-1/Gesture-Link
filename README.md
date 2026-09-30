@@ -24,6 +24,9 @@ Control your Windows PC from your Android phone over your local network — powe
 **Dashboard**
 - Live CPU / RAM / battery stats
 
+**Clipboard**
+- Send the phone's clipboard text to the PC, or copy the PC's clipboard text onto the phone
+
 **Files**
 - Browse the PC's drives and folders
 - Download a file from the PC to the phone (15MB limit)
