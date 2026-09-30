@@ -11,6 +11,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
 from server.actions import get_handler
+from server.actions.mouse import release_held_buttons
 from server.auth import is_locked_out, is_token_valid
 from server.battery_watch import battery_watch_loop
 from server.config import load_config
@@ -44,6 +45,9 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.send_text(response.model_dump_json())
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+        if not manager.active_connections:
+            # Nobody left who could send the matching "up" for a drag in progress.
+            release_held_buttons()
 
 
 async def handle_message(raw: str, client_address: str) -> CommandResponse:

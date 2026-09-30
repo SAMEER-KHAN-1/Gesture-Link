@@ -1,4 +1,4 @@
-"""Remote mouse control: relative move, click, and scroll.
+"""Remote mouse control: relative move, click, press-and-hold (drag), and scroll.
 
 Like the media keys, this drives the classic mouse_event Win32 call rather
 than the newer SendInput - simpler for the handful of event types we need,
@@ -23,6 +23,19 @@ _CLICK_FLAGS = {
     "right": (MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP),
 }
 
+MAX_CLICK_COUNT = 3
+
+# Buttons currently held down by a `mouse_button` "down" that hasn't had its "up" yet.
+# Tracked so they can be released if the phone disappears mid-drag - otherwise the
+# PC would be left with a mouse button stuck down.
+_held_buttons: set[str] = set()
+
+
+def release_held_buttons() -> None:
+    for button in list(_held_buttons):
+        ctypes.windll.user32.mouse_event(_CLICK_FLAGS[button][1], 0, 0, 0, 0)
+    _held_buttons.clear()
+
 
 @register("mouse_move")
 async def handle_mouse_move(params: dict) -> dict:
@@ -39,9 +52,39 @@ async def handle_mouse_click(params: dict) -> dict:
     if flags is None:
         raise ValueError(f"unknown button '{button}'")
 
+    # Several clicks are done here in one go rather than as separate commands: a
+    # double-click has to land within the OS's double-click interval, which
+    # network round-trips between separate messages can't reliably meet.
+    count = params.get("count", 1)
+    if not isinstance(count, int) or isinstance(count, bool) or not 1 <= count <= MAX_CLICK_COUNT:
+        raise ValueError(f"'count' must be an integer from 1 to {MAX_CLICK_COUNT}")
+
     down_flag, up_flag = flags
-    ctypes.windll.user32.mouse_event(down_flag, 0, 0, 0, 0)
-    ctypes.windll.user32.mouse_event(up_flag, 0, 0, 0, 0)
+    for _ in range(count):
+        ctypes.windll.user32.mouse_event(down_flag, 0, 0, 0, 0)
+        ctypes.windll.user32.mouse_event(up_flag, 0, 0, 0, 0)
+    return {}
+
+
+@register("mouse_button")
+async def handle_mouse_button(params: dict) -> dict:
+    """Press or release a button on its own - press, move the mouse, release is a drag."""
+    button = params.get("button", "left")
+    flags = _CLICK_FLAGS.get(button)
+    if flags is None:
+        raise ValueError(f"unknown button '{button}'")
+
+    state = params.get("state")
+    if state not in ("down", "up"):
+        raise ValueError("'state' must be 'down' or 'up'")
+
+    down_flag, up_flag = flags
+    if state == "down":
+        ctypes.windll.user32.mouse_event(down_flag, 0, 0, 0, 0)
+        _held_buttons.add(button)
+    else:
+        ctypes.windll.user32.mouse_event(up_flag, 0, 0, 0, 0)
+        _held_buttons.discard(button)
     return {}
 
 

@@ -44,7 +44,7 @@ http://<pc-lan-ip>:8765/health
 - Processes: `process_list`, `process_kill` (refuses critical Windows processes and the server itself)
 - Display: `brightness_get`, `brightness_set` (laptop/built-in panels only - external monitors don't expose it)
 - Screen: `screenshot` (primary monitor, downscaled JPEG)
-- Mouse: `mouse_move`, `mouse_click`, `mouse_scroll`
+- Mouse: `mouse_move`, `mouse_click` (with an optional repeat count for double-clicks), `mouse_button` (press/release, for dragging), `mouse_scroll`
 - Keyboard: `keyboard_type`, `keyboard_key`, `keyboard_hotkey` (key combos like Ctrl+C or Alt+Tab)
 - Push notifications (unprompted, not tied to a request): a `battery_low` notice broadcast to every connected phone when the battery drops to 15% or below while unplugged
 

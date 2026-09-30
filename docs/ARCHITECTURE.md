@@ -122,7 +122,8 @@ a response by the presence of the `push` key instead:
 | `brightness_set` | `{ "level": 40 }`          | sets the built-in display's brightness (integer 0-100) |
 | `keyboard_hotkey`| `{ "keys": ["ctrl", "c"] }` | presses the keys in order and releases them in reverse (1-4 keys). Names: `ctrl`, `alt`, `shift`, `win`, letters, digits, `f1`-`f12`, enter, backspace, tab, escape, space, delete, insert, home, end, pageup, pagedown, arrows, printscreen |
 | `mouse_move`     | `{ "dx": 0, "dy": 0 }`     | moves the cursor relative to its current position |
-| `mouse_click`    | `{ "button": "left" }`     | clicks the left or right mouse button           |
+| `mouse_click`    | `{ "button": "left", "count": 1 }` | clicks the left or right mouse button; `count` (1-3, optional) repeats the click on the PC so a double-click lands inside the OS's double-click interval |
+| `mouse_button`   | `{ "button": "left", "state": "down" }` | presses (`down`) or releases (`up`) a mouse button on its own - down, `mouse_move`s, up is a drag. Any button still held when the last phone disconnects is released automatically |
 | `mouse_scroll`   | `{ "ticks": 0 }`           | scrolls the wheel (positive = down, negative = up) |
 | `keyboard_type`  | `{ "text": "..." }`        | types the given text (layout-independent)       |
 | `keyboard_key`   | `{ "key": "enter" }`       | presses a named key (enter, backspace, tab, escape, space) |

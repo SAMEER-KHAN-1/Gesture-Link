@@ -1,5 +1,9 @@
 import asyncio
 import json
+from types import SimpleNamespace
+from unittest.mock import MagicMock
+
+from fastapi import WebSocketDisconnect
 
 from server import main
 
@@ -67,3 +71,33 @@ def test_handler_exception_is_reported_as_error(monkeypatch):
 
     assert response.ok is False
     assert response.error == "path is required"
+
+
+class _DisconnectingSocket:
+    """Accepts the connection, then immediately drops it - a phone that vanishes."""
+
+    client = SimpleNamespace(host="10.0.0.9")
+
+    async def accept(self):
+        pass
+
+    async def receive_text(self):
+        raise WebSocketDisconnect()
+
+
+def _connect_and_drop(monkeypatch, other_connections=()):
+    release = MagicMock()
+    monkeypatch.setattr(main, "release_held_buttons", release)
+    monkeypatch.setattr(main.manager, "active_connections", list(other_connections))
+    run(main.websocket_endpoint(_DisconnectingSocket()))
+    return release
+
+
+def test_disconnect_releases_held_mouse_buttons_when_no_phone_is_left(monkeypatch):
+    release = _connect_and_drop(monkeypatch)
+    release.assert_called_once()
+
+
+def test_disconnect_leaves_mouse_buttons_alone_while_another_phone_is_connected(monkeypatch):
+    release = _connect_and_drop(monkeypatch, other_connections=[object()])
+    release.assert_not_called()
