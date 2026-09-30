@@ -103,7 +103,7 @@ a response by the presence of the `push` key instead:
 | `radio_status`   | –                          | returns the wifi/bluetooth radios' actual on/off state |
 | `apps_list`      | –                          | returns installed/known-launchable apps         |
 | `app_launch`     | `{ "app_id": "..." }`      | launches an app returned by `apps_list`         |
-| `system_stats`   | –                          | returns CPU %, RAM %, and battery info          |
+| `system_stats`   | –                          | returns CPU %, RAM %, system-drive disk used % and free GB (`null` if unreadable), uptime in seconds, and battery info |
 | `volume_up`      | –                          | presses the volume-up media key                 |
 | `volume_down`    | –                          | presses the volume-down media key                |
 | `volume_mute_toggle` | –                      | presses the mute media key                       |

@@ -41,6 +41,9 @@ data class AppsListResult(val apps: List<AppInfo> = emptyList())
 data class SystemStats(
     @SerialName("cpu_percent") val cpuPercent: Double,
     @SerialName("memory_percent") val memoryPercent: Double,
+    @SerialName("disk_percent") val diskPercent: Double? = null,
+    @SerialName("disk_free_gb") val diskFreeGb: Double? = null,
+    @SerialName("uptime_seconds") val uptimeSeconds: Long? = null,
     @SerialName("battery_percent") val batteryPercent: Double? = null,
     @SerialName("battery_plugged") val batteryPlugged: Boolean? = null,
 )
