@@ -31,6 +31,8 @@ import com.gesturelink.app.network.DownloadFileResult
 import com.gesturelink.app.network.FileEntry
 import com.gesturelink.app.network.GestureLinkClient
 import com.gesturelink.app.network.ListDirResult
+import com.gesturelink.app.network.ProcessInfo
+import com.gesturelink.app.network.ProcessListResult
 import com.gesturelink.app.network.RadioStatusResult
 import com.gesturelink.app.network.ScreenshotResult
 import com.gesturelink.app.network.SystemStats
@@ -38,6 +40,7 @@ import com.gesturelink.app.ui.AppsScreen
 import com.gesturelink.app.ui.DashboardScreen
 import com.gesturelink.app.ui.FilesScreen
 import com.gesturelink.app.ui.PairingScreen
+import com.gesturelink.app.ui.ProcessesScreen
 import com.gesturelink.app.ui.ScreenshotScreen
 import com.gesturelink.app.ui.TouchpadScreen
 import kotlinx.coroutines.CancellationException
@@ -65,6 +68,7 @@ private sealed class Screen {
     object Files : Screen()
     object Touchpad : Screen()
     object Screenshot : Screen()
+    object Processes : Screen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -105,6 +109,9 @@ class MainActivity : ComponentActivity() {
 
             var screenshot by remember { mutableStateOf<Bitmap?>(null) }
             var screenshotLoading by remember { mutableStateOf(false) }
+
+            var processes by remember { mutableStateOf<List<ProcessInfo>>(emptyList()) }
+            var processesLoading by remember { mutableStateOf(false) }
 
             val snackbarHostState = remember { SnackbarHostState() }
             val coroutineScope = rememberCoroutineScope()
@@ -199,6 +206,51 @@ class MainActivity : ComponentActivity() {
                     return bitmap != null
                 } finally {
                     screenshotLoading = false
+                }
+            }
+
+            fun loadProcesses() {
+                processesLoading = true
+                coroutineScope.launch {
+                    runCatching { client.sendCommand(pairedToken, "process_list") }
+                        .onSuccess { response ->
+                            processesLoading = false
+                            if (response.ok) {
+                                processes = Json.decodeFromJsonElement(ProcessListResult.serializer(), response.result).processes
+                            } else {
+                                snackbarHostState.showSnackbar(response.error ?: "couldn't load processes")
+                            }
+                        }
+                        .onFailure { throwable ->
+                            processesLoading = false
+                            snackbarHostState.showSnackbar(throwable.message ?: "couldn't load processes")
+                        }
+                }
+            }
+
+            fun killProcess(process: ProcessInfo) {
+                coroutineScope.launch {
+                    runCatching {
+                        client.sendCommand(
+                            pairedToken,
+                            "process_kill",
+                            buildJsonObject {
+                                put("pid", process.pid)
+                                put("name", process.name)
+                            },
+                        )
+                    }
+                        .onSuccess { response ->
+                            if (response.ok) {
+                                snackbarHostState.showSnackbar("Ended ${process.name}")
+                            } else {
+                                snackbarHostState.showSnackbar(response.error ?: "couldn't end '${process.name}'")
+                            }
+                            loadProcesses()
+                        }
+                        .onFailure { throwable ->
+                            snackbarHostState.showSnackbar(throwable.message ?: "couldn't end '${process.name}'")
+                        }
                 }
             }
 
@@ -422,6 +474,11 @@ class MainActivity : ComponentActivity() {
                                     screenshot = null // don't flash the previous session's frame
                                     screen = Screen.Screenshot
                                 },
+                                onOpenProcesses = {
+                                    processes = emptyList()
+                                    screen = Screen.Processes
+                                    loadProcesses()
+                                },
                                 onDisconnect = {
                                     client.disconnect()
                                     connectionState = ConnectionState.DISCONNECTED
@@ -503,6 +560,15 @@ class MainActivity : ComponentActivity() {
                             screenshot = screenshot,
                             isLoading = screenshotLoading,
                             onRefresh = { refreshScreenshot() },
+                            onBack = { screen = Screen.Dashboard },
+                        )
+
+                        Screen.Processes -> ProcessesScreen(
+                            snackbarHostState = snackbarHostState,
+                            isLoading = processesLoading,
+                            processes = processes,
+                            onRefresh = { loadProcesses() },
+                            onKill = { process -> killProcess(process) },
                             onBack = { screen = Screen.Dashboard },
                         )
 

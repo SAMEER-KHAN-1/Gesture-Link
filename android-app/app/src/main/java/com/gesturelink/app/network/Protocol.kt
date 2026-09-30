@@ -87,6 +87,17 @@ data class ScreenshotResult(
     @SerialName("data_base64") val dataBase64: String,
 )
 
+/** One running process in the `result` payload for the `process_list` action. */
+@Serializable
+data class ProcessInfo(
+    val pid: Int,
+    val name: String,
+    @SerialName("memory_mb") val memoryMb: Double,
+)
+
+@Serializable
+data class ProcessListResult(val processes: List<ProcessInfo> = emptyList())
+
 /**
  * A message the PC sends unprompted, not in reply to a request - told apart
  * from a CommandResponse by having no `id` field. See the "Push messages"
