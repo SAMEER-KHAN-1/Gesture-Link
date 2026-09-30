@@ -40,4 +40,30 @@ class FormatUtilsTest {
     fun `sizes beyond a terabyte stay in TB rather than an unlabelled unit`() {
         assertEquals("1024.0 TB", formatFileSize(1024L * 1024 * 1024 * 1024 * 1024))
     }
+
+    @Test
+    fun `uptime under an hour is shown in minutes`() {
+        assertEquals("0m", formatUptime(0))
+        assertEquals("0m", formatUptime(59))
+        assertEquals("7m", formatUptime(7 * 60L))
+        assertEquals("59m", formatUptime(3599))
+    }
+
+    @Test
+    fun `uptime under a day is shown in hours and minutes`() {
+        assertEquals("1h 0m", formatUptime(3600))
+        assertEquals("5h 12m", formatUptime(5 * 3600L + 12 * 60))
+        assertEquals("23h 59m", formatUptime(86399))
+    }
+
+    @Test
+    fun `uptime of a day or more is shown in days and hours`() {
+        assertEquals("1d 0h", formatUptime(86400))
+        assertEquals("3d 4h", formatUptime(3 * 86400L + 4 * 3600 + 59 * 60))
+    }
+
+    @Test
+    fun `a negative uptime is treated as zero`() {
+        assertEquals("0m", formatUptime(-5))
+    }
 }

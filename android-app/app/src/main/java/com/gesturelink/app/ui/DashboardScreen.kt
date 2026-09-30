@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.gesturelink.app.network.SystemStats
+import com.gesturelink.app.util.formatUptime
 import kotlin.math.roundToInt
 
 private enum class ConfirmAction { SHUTDOWN, RESTART, FORGET }
@@ -94,6 +95,13 @@ fun DashboardScreen(
                         Text("Loading...")
                     } else {
                         Text("CPU ${stats.cpuPercent.roundToInt()}%  ·  RAM ${stats.memoryPercent.roundToInt()}%")
+                        if (stats.diskPercent != null) {
+                            val freeLabel = stats.diskFreeGb?.let { "  (${it.roundToInt()} GB free)" }.orEmpty()
+                            Text("Disk ${stats.diskPercent.roundToInt()}% used$freeLabel")
+                        }
+                        if (stats.uptimeSeconds != null) {
+                            Text("Uptime ${formatUptime(stats.uptimeSeconds)}")
+                        }
                         if (stats.batteryPercent != null) {
                             val chargingLabel = if (stats.batteryPlugged == true) "charging" else "on battery"
                             Text("Battery ${stats.batteryPercent.roundToInt()}% ($chargingLabel)")
