@@ -79,6 +79,14 @@ data class ClipboardGetResult(
     val truncated: Boolean = false,
 )
 
+/** Shape of the `result` payload for the `screenshot` action. */
+@Serializable
+data class ScreenshotResult(
+    val width: Int,
+    val height: Int,
+    @SerialName("data_base64") val dataBase64: String,
+)
+
 /**
  * A message the PC sends unprompted, not in reply to a request - told apart
  * from a CommandResponse by having no `id` field. See the "Push messages"

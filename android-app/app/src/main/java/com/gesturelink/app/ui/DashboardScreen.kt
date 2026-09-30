@@ -48,6 +48,7 @@ fun DashboardScreen(
     onOpenApps: () -> Unit,
     onOpenFiles: () -> Unit,
     onOpenTouchpad: () -> Unit,
+    onOpenScreen: () -> Unit,
     onDisconnect: () -> Unit,
     onForget: () -> Unit,
     onVolumeUp: () -> Unit,
@@ -229,6 +230,18 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = onOpenTouchpad, modifier = Modifier.fillMaxWidth()) {
                         Text("Open touchpad")
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "Screen", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = onOpenScreen, modifier = Modifier.fillMaxWidth()) {
+                        Text("View PC screen")
                     }
                 }
             }

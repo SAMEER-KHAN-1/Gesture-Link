@@ -24,6 +24,9 @@ Control your Windows PC from your Android phone over your local network — powe
 **Dashboard**
 - Live CPU / RAM / battery stats
 
+**Screen**
+- View the PC's screen from the phone (manual refresh or a live auto-refresh), with pinch to zoom
+
 **Clipboard**
 - Send the phone's clipboard text to the PC, or copy the PC's clipboard text onto the phone
 

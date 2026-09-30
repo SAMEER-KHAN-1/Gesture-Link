@@ -1,7 +1,10 @@
 package com.gesturelink.app
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.util.Base64
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,15 +32,20 @@ import com.gesturelink.app.network.FileEntry
 import com.gesturelink.app.network.GestureLinkClient
 import com.gesturelink.app.network.ListDirResult
 import com.gesturelink.app.network.RadioStatusResult
+import com.gesturelink.app.network.ScreenshotResult
 import com.gesturelink.app.network.SystemStats
 import com.gesturelink.app.ui.AppsScreen
 import com.gesturelink.app.ui.DashboardScreen
 import com.gesturelink.app.ui.FilesScreen
 import com.gesturelink.app.ui.PairingScreen
+import com.gesturelink.app.ui.ScreenshotScreen
 import com.gesturelink.app.ui.TouchpadScreen
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -47,12 +55,16 @@ import kotlinx.serialization.json.put
 
 private const val STATS_POLL_INTERVAL_MS = 5000L
 
+// A phone screen can't show more than this anyway, and it keeps each frame small.
+private const val SCREENSHOT_MAX_WIDTH = 1280
+
 private sealed class Screen {
     object Pairing : Screen()
     object Dashboard : Screen()
     object Apps : Screen()
     object Files : Screen()
     object Touchpad : Screen()
+    object Screenshot : Screen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -90,6 +102,9 @@ class MainActivity : ComponentActivity() {
             var fileEntries by remember { mutableStateOf<List<FileEntry>>(emptyList()) }
             var filesLoading by remember { mutableStateOf(false) }
             var downloadingPath by remember { mutableStateOf<String?>(null) }
+
+            var screenshot by remember { mutableStateOf<Bitmap?>(null) }
+            var screenshotLoading by remember { mutableStateOf(false) }
 
             val snackbarHostState = remember { SnackbarHostState() }
             val coroutineScope = rememberCoroutineScope()
@@ -154,6 +169,36 @@ class MainActivity : ComponentActivity() {
                         .onFailure { throwable ->
                             snackbarHostState.showSnackbar(throwable.message ?: "couldn't read the PC clipboard")
                         }
+                }
+            }
+
+            /** Returns whether the capture worked, so the screen can stop live mode on a failure. */
+            suspend fun refreshScreenshot(): Boolean {
+                screenshotLoading = true
+                try {
+                    val bitmap = runCatching {
+                        val response = client.sendCommand(
+                            pairedToken,
+                            "screenshot",
+                            buildJsonObject { put("max_width", SCREENSHOT_MAX_WIDTH) },
+                        )
+                        if (!response.ok) throw IllegalStateException(response.error ?: "couldn't capture the screen")
+                        val result = Json.decodeFromJsonElement(ScreenshotResult.serializer(), response.result)
+                        withContext(Dispatchers.Default) {
+                            val bytes = Base64.decode(result.dataBase64, Base64.DEFAULT)
+                            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                                ?: throw IllegalStateException("couldn't decode the screenshot")
+                        }
+                    }.onFailure { throwable ->
+                        // Leaving the screen cancels a capture in flight - that's not an error to show.
+                        if (throwable is CancellationException) throw throwable
+                        snackbarHostState.showSnackbar(throwable.message ?: "couldn't capture the screen")
+                    }.getOrNull()
+
+                    if (bitmap != null) screenshot = bitmap
+                    return bitmap != null
+                } finally {
+                    screenshotLoading = false
                 }
             }
 
@@ -373,6 +418,10 @@ class MainActivity : ComponentActivity() {
                                     loadDir("")
                                 },
                                 onOpenTouchpad = { screen = Screen.Touchpad },
+                                onOpenScreen = {
+                                    screenshot = null // don't flash the previous session's frame
+                                    screen = Screen.Screenshot
+                                },
                                 onDisconnect = {
                                     client.disconnect()
                                     connectionState = ConnectionState.DISCONNECTED
@@ -446,6 +495,14 @@ class MainActivity : ComponentActivity() {
                             onKeyPress = { key ->
                                 runCommand("keyboard_key", buildJsonObject { put("key", key) })
                             },
+                            onBack = { screen = Screen.Dashboard },
+                        )
+
+                        Screen.Screenshot -> ScreenshotScreen(
+                            snackbarHostState = snackbarHostState,
+                            screenshot = screenshot,
+                            isLoading = screenshotLoading,
+                            onRefresh = { refreshScreenshot() },
                             onBack = { screen = Screen.Dashboard },
                         )
 
