@@ -120,6 +120,7 @@ a response by the presence of the `push` key instead:
 | `process_kill`   | `{ "pid": 1234, "name": "chrome.exe" }` (`name` optional) | force-ends a process. If `name` is given and the pid no longer has that name (stale list, recycled pid) it refuses. Also refuses the server itself and critical Windows processes (csrss, winlogon, lsass, ...) |
 | `brightness_get` | –                          | returns the built-in display's brightness as `{ "brightness": 40 }` (0-100); errors on displays that don't expose WMI brightness (most external monitors) |
 | `brightness_set` | `{ "level": 40 }`          | sets the built-in display's brightness (integer 0-100) |
+| `keyboard_hotkey`| `{ "keys": ["ctrl", "c"] }` | presses the keys in order and releases them in reverse (1-4 keys). Names: `ctrl`, `alt`, `shift`, `win`, letters, digits, `f1`-`f12`, enter, backspace, tab, escape, space, delete, insert, home, end, pageup, pagedown, arrows, printscreen |
 | `mouse_move`     | `{ "dx": 0, "dy": 0 }`     | moves the cursor relative to its current position |
 | `mouse_click`    | `{ "button": "left" }`     | clicks the left or right mouse button           |
 | `mouse_scroll`   | `{ "ticks": 0 }`           | scrolls the wheel (positive = down, negative = up) |

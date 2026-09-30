@@ -29,6 +29,38 @@ VK_BY_NAME = {
 }
 
 
+KEYEVENTF_EXTENDEDKEY = 0x0001
+
+# Held down while another key is pressed, then released - the "Ctrl" in Ctrl+C.
+MODIFIER_VKS = {
+    "ctrl": 0x11,
+    "alt": 0x12,
+    "shift": 0x10,
+    "win": 0x5B,
+}
+
+# Non-alphanumeric keys usable in a hotkey, on top of the ones in VK_BY_NAME.
+HOTKEY_EXTRA_VKS = {
+    "delete": 0x2E,
+    "insert": 0x2D,
+    "home": 0x24,
+    "end": 0x23,
+    "pageup": 0x21,
+    "pagedown": 0x22,
+    "left": 0x25,
+    "up": 0x26,
+    "right": 0x27,
+    "down": 0x28,
+    "printscreen": 0x2C,
+}
+
+# These share a virtual-key code with a numpad key unless flagged "extended", so
+# without the flag e.g. "home" could arrive as numpad-7 with Num Lock off.
+EXTENDED_VKS = {0x5B, 0x2E, 0x2D, 0x24, 0x23, 0x21, 0x22, 0x25, 0x26, 0x27, 0x28, 0x2C}
+
+MAX_HOTKEY_KEYS = 4
+
+
 class KEYBDINPUT(ctypes.Structure):
     _fields_ = [
         ("wVk", wintypes.WORD),
@@ -56,6 +88,52 @@ def _type_char(char: str) -> None:
 def _press_vk(vk_code: int) -> None:
     ctypes.windll.user32.keybd_event(vk_code, 0, 0, 0)
     ctypes.windll.user32.keybd_event(vk_code, 0, KEYEVENTF_KEYUP, 0)
+
+
+def _hotkey_vk(name: str) -> int:
+    key = name.lower()
+    if key in MODIFIER_VKS:
+        return MODIFIER_VKS[key]
+    if key in VK_BY_NAME:
+        return VK_BY_NAME[key]
+    if key in HOTKEY_EXTRA_VKS:
+        return HOTKEY_EXTRA_VKS[key]
+    if len(key) == 1 and key.isascii() and key.isalnum():
+        return ord(key.upper())  # VK codes for A-Z and 0-9 are just their ASCII codes
+    if key.startswith("f") and key[1:].isdigit() and 1 <= int(key[1:]) <= 12:
+        return 0x70 + int(key[1:]) - 1  # VK_F1 is 0x70
+    raise ValueError(f"unknown key '{name}'")
+
+
+def _send_vk(vk_code: int, key_up: bool) -> None:
+    flags = KEYEVENTF_EXTENDEDKEY if vk_code in EXTENDED_VKS else 0
+    if key_up:
+        flags |= KEYEVENTF_KEYUP
+    ctypes.windll.user32.keybd_event(vk_code, 0, flags, 0)
+
+
+@register("keyboard_hotkey")
+async def handle_keyboard_hotkey(params: dict) -> dict:
+    keys = params.get("keys")
+    if not isinstance(keys, list) or not 1 <= len(keys) <= MAX_HOTKEY_KEYS:
+        raise ValueError(f"'keys' must be a list of 1 to {MAX_HOTKEY_KEYS} key names")
+    if not all(isinstance(key, str) for key in keys):
+        raise ValueError("'keys' must only contain strings")
+
+    # Resolve every name before pressing anything, so a typo in the last key can't
+    # leave the earlier ones pressed.
+    vk_codes = [_hotkey_vk(key) for key in keys]
+
+    pressed = []
+    try:
+        for vk in vk_codes:
+            _send_vk(vk, key_up=False)
+            pressed.append(vk)
+    finally:
+        # Always release, in reverse order, so a modifier can never be left stuck down.
+        for vk in reversed(pressed):
+            _send_vk(vk, key_up=True)
+    return {}
 
 
 @register("keyboard_type")

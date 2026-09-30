@@ -45,7 +45,7 @@ http://<pc-lan-ip>:8765/health
 - Display: `brightness_get`, `brightness_set` (laptop/built-in panels only - external monitors don't expose it)
 - Screen: `screenshot` (primary monitor, downscaled JPEG)
 - Mouse: `mouse_move`, `mouse_click`, `mouse_scroll`
-- Keyboard: `keyboard_type`, `keyboard_key`
+- Keyboard: `keyboard_type`, `keyboard_key`, `keyboard_hotkey` (key combos like Ctrl+C or Alt+Tab)
 - Push notifications (unprompted, not tied to a request): a `battery_low` notice broadcast to every connected phone when the battery drops to 15% or below while unplugged
 
 Full protocol/action reference lives in [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
