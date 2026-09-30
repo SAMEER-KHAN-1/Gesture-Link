@@ -25,4 +25,4 @@ def get_handler(action_name: str) -> ActionHandler | None:
 
 
 # Import submodules so their @register(...) calls actually run and populate the registry.
-from . import apps, clipboard, files, keyboard, media, mouse, network, power, screenshot, system  # noqa: E402,F401
+from . import apps, clipboard, files, keyboard, media, mouse, network, power, processes, screenshot, system  # noqa: E402,F401
