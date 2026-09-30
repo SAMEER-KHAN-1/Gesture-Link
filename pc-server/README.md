@@ -40,6 +40,7 @@ http://<pc-lan-ip>:8765/health
 - System: `system_stats`
 - Media: `volume_up`, `volume_down`, `volume_mute_toggle`, `media_play_pause`, `media_next`, `media_previous`
 - Files: `list_dir`, `download_file`, `upload_file`
+- Clipboard: `clipboard_get`, `clipboard_set` (plain text)
 - Mouse: `mouse_move`, `mouse_click`, `mouse_scroll`
 - Keyboard: `keyboard_type`, `keyboard_key`
 - Push notifications (unprompted, not tied to a request): a `battery_low` notice broadcast to every connected phone when the battery drops to 15% or below while unplugged
