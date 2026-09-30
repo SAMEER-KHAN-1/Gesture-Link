@@ -13,6 +13,9 @@ Control your Windows PC from your Android phone over your local network — powe
 - Turn Wifi adapter on/off
 - Turn Bluetooth radio on/off
 
+**Display**
+- Adjust the built-in screen's brightness with a slider (laptop panels; hidden if the PC's display doesn't support it)
+
 **Apps**
 - List installed / running apps
 - Launch an app remotely

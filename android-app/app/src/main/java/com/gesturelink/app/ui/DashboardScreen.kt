@@ -17,6 +17,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -38,6 +39,8 @@ fun DashboardScreen(
     stats: SystemStats?,
     wifiEnabled: Boolean,
     bluetoothEnabled: Boolean,
+    /** Null when the PC's display doesn't support brightness control (e.g. an external monitor). */
+    brightness: Int?,
     onShutdown: () -> Unit,
     onRestart: () -> Unit,
     onCancelShutdown: () -> Unit,
@@ -60,6 +63,7 @@ fun DashboardScreen(
     onMediaNext: () -> Unit,
     onSendClipboardToPc: () -> Unit,
     onFetchPcClipboard: () -> Unit,
+    onBrightnessChange: (Int) -> Unit,
 ) {
     var pendingConfirm by remember { mutableStateOf<ConfirmAction?>(null) }
 
@@ -154,6 +158,31 @@ fun DashboardScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            if (brightness != null) {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        // Follows the PC's value, but tracks the finger while dragging; the
+                        // command is only sent on release so a drag isn't dozens of slow requests.
+                        var sliderValue by remember(brightness) { mutableStateOf(brightness.toFloat()) }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(text = "Brightness", style = MaterialTheme.typography.titleMedium)
+                            Text("${sliderValue.roundToInt()}%")
+                        }
+                        Slider(
+                            value = sliderValue,
+                            onValueChange = { sliderValue = it },
+                            onValueChangeFinished = { onBrightnessChange(sliderValue.roundToInt()) },
+                            valueRange = 0f..100f,
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {

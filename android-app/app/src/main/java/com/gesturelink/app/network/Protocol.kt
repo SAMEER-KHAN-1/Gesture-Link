@@ -87,6 +87,10 @@ data class ScreenshotResult(
     @SerialName("data_base64") val dataBase64: String,
 )
 
+/** Shape of the `result` payload for the `brightness_get` action. */
+@Serializable
+data class BrightnessResult(val brightness: Int)
+
 /** One running process in the `result` payload for the `process_list` action. */
 @Serializable
 data class ProcessInfo(

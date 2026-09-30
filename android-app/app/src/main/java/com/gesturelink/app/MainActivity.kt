@@ -25,6 +25,7 @@ import com.gesturelink.app.data.PairingInfo
 import com.gesturelink.app.data.PairingStore
 import com.gesturelink.app.network.AppInfo
 import com.gesturelink.app.network.AppsListResult
+import com.gesturelink.app.network.BrightnessResult
 import com.gesturelink.app.network.ClipboardGetResult
 import com.gesturelink.app.network.ConnectionState
 import com.gesturelink.app.network.DownloadFileResult
@@ -95,6 +96,10 @@ class MainActivity : ComponentActivity() {
             // the dashboard loads (see the LaunchedEffect below).
             var wifiEnabled by remember { mutableStateOf(true) }
             var bluetoothEnabled by remember { mutableStateOf(true) }
+
+            // Null until the PC reports it - and stays null for displays that don't support
+            // brightness control, which hides the dashboard's brightness card.
+            var brightness by remember { mutableStateOf<Int?>(null) }
 
             var apps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
             var appsLoading by remember { mutableStateOf(false) }
@@ -419,6 +424,10 @@ class MainActivity : ComponentActivity() {
                                             bluetoothEnabled = status.bluetoothEnabled
                                         }
                                     }
+                                brightness = runCatching { client.sendCommand(pairedToken, "brightness_get") }
+                                    .getOrNull()
+                                    ?.takeIf { it.ok }
+                                    ?.let { Json.decodeFromJsonElement(BrightnessResult.serializer(), it.result).brightness }
                                 while (isActive) {
                                     runCatching { client.sendCommand(pairedToken, "system_stats") }
                                         .onSuccess { response ->
@@ -437,6 +446,7 @@ class MainActivity : ComponentActivity() {
                                 stats = stats,
                                 wifiEnabled = wifiEnabled,
                                 bluetoothEnabled = bluetoothEnabled,
+                                brightness = brightness,
                                 onShutdown = { runCommand("shutdown") },
                                 onRestart = { runCommand("restart") },
                                 onCancelShutdown = { runCommand("cancel_shutdown") },
@@ -499,6 +509,15 @@ class MainActivity : ComponentActivity() {
                                 onMediaNext = { runCommand("media_next") },
                                 onSendClipboardToPc = { sendClipboardToPc() },
                                 onFetchPcClipboard = { fetchPcClipboard() },
+                                onBrightnessChange = { level ->
+                                    val previous = brightness
+                                    brightness = level
+                                    runCommand(
+                                        action = "brightness_set",
+                                        params = buildJsonObject { put("level", level) },
+                                        onFailureRevert = { brightness = previous },
+                                    )
+                                },
                             )
                         }
 
