@@ -44,6 +44,7 @@ Control your Windows PC from your Android phone over your local network — powe
 **Touchpad**
 - Drag to move the mouse (adjustable sensitivity), tap to left/right click, scroll up/down
 - Type text on the PC, or send Enter/Backspace/Escape
+- A presentation remote with big next/previous buttons plus start, end and blank-screen keys
 - One-tap keyboard shortcuts: copy/paste/undo, Alt+Tab, show desktop, Task Manager, and more
 
 **Pairing**

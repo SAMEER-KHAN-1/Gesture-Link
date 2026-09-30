@@ -53,6 +53,7 @@ fun DashboardScreen(
     onOpenFiles: () -> Unit,
     onOpenTouchpad: () -> Unit,
     onOpenShortcuts: () -> Unit,
+    onOpenPresentation: () -> Unit,
     onOpenScreen: () -> Unit,
     onOpenProcesses: () -> Unit,
     onDisconnect: () -> Unit,
@@ -273,6 +274,10 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(onClick = onOpenShortcuts, modifier = Modifier.fillMaxWidth()) {
                         Text("Keyboard shortcuts")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(onClick = onOpenPresentation, modifier = Modifier.fillMaxWidth()) {
+                        Text("Presentation remote")
                     }
                 }
             }

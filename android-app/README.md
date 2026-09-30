@@ -20,12 +20,13 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - `ui/TouchpadScreen.kt` - a drag surface that moves the PC's mouse cursor (with a sensitivity slider), left/right click and scroll buttons, plus a text field to type on the PC and send Enter/Backspace/Escape
 - `ui/ScreenshotScreen.kt` - shows a screenshot of the PC's screen, with a manual Refresh, a Live switch that re-captures every ~1.5s (one capture at a time, and it turns itself off if a capture fails), and pinch-to-zoom/pan
 - `ui/ShortcutsScreen.kt` - a grid of one-tap keyboard shortcuts (copy/paste, Alt+Tab, show desktop, Task Manager, ...) sent to the PC's `keyboard_hotkey` action
+- `ui/PresentationScreen.kt` - a slideshow remote: big Next/Previous buttons plus Start (F5), End (Esc) and Blank (B), all sent through `keyboard_hotkey`
 - `ui/ProcessesScreen.kt` - a task-manager style list of the PC's running processes (searchable, biggest memory use first); tap one and confirm to force-end it
 - `data/FileSaver.kt` - decodes a downloaded file and saves it into the device's Downloads folder via MediaStore (API 29+)
 - `data/ClipboardHelper.kt` - reads and writes the device's plain-text clipboard, used by the dashboard's clipboard card to sync text with the PC
 - `data/FileSender.kt` - reads a file picked via the system document picker into base64, ready to upload
 - `util/FormatUtils.kt` - small pure formatting helpers (file sizes and uptime), pulled out of `FilesScreen.kt` so they're unit-testable
-- `MainActivity.kt` - a small in-memory screen state machine (Pairing → Dashboard → Apps/Files/Touchpad/Shortcuts/Screen/Processes) wiring all of the above to `GestureLinkClient`, plus a 5s poll loop for system stats while the dashboard is visible. Auto-reconnects to the last paired PC on launch, and drops back to the pairing screen with an explanation any time the connection is actually lost (not just on the first failed attempt)
+- `MainActivity.kt` - a small in-memory screen state machine (Pairing → Dashboard → Apps/Files/Touchpad/Shortcuts/Presentation/Screen/Processes) wiring all of the above to `GestureLinkClient`, plus a 5s poll loop for system stats while the dashboard is visible. Auto-reconnects to the last paired PC on launch, and drops back to the pairing screen with an explanation any time the connection is actually lost (not just on the first failed attempt)
 
 This now covers the full v1 feature set end to end: pair, then shut down / restart / sleep / lock the PC, flip wifi/bluetooth, control volume/media, launch apps, browse/download its files, and drive the mouse and keyboard, all from the phone.
 

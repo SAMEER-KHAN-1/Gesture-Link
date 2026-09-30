@@ -41,6 +41,7 @@ import com.gesturelink.app.ui.AppsScreen
 import com.gesturelink.app.ui.DashboardScreen
 import com.gesturelink.app.ui.FilesScreen
 import com.gesturelink.app.ui.PairingScreen
+import com.gesturelink.app.ui.PresentationScreen
 import com.gesturelink.app.ui.ProcessesScreen
 import com.gesturelink.app.ui.ScreenshotScreen
 import com.gesturelink.app.ui.ShortcutsScreen
@@ -74,6 +75,7 @@ private sealed class Screen {
     object Screenshot : Screen()
     object Processes : Screen()
     object Shortcuts : Screen()
+    object Presentation : Screen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -143,6 +145,10 @@ class MainActivity : ComponentActivity() {
                             snackbarHostState.showSnackbar(throwable.message ?: "'$action' failed")
                         }
                 }
+            }
+
+            fun runHotkey(keys: List<String>) {
+                runCommand("keyboard_hotkey", buildJsonObject { put("keys", buildJsonArray { keys.forEach { add(it) } }) })
             }
 
             fun sendClipboardToPc() {
@@ -485,6 +491,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onOpenTouchpad = { screen = Screen.Touchpad },
                                 onOpenShortcuts = { screen = Screen.Shortcuts },
+                                onOpenPresentation = { screen = Screen.Presentation },
                                 onOpenScreen = {
                                     screenshot = null // don't flash the previous session's frame
                                     screen = Screen.Screenshot
@@ -598,12 +605,13 @@ class MainActivity : ComponentActivity() {
 
                         Screen.Shortcuts -> ShortcutsScreen(
                             snackbarHostState = snackbarHostState,
-                            onShortcut = { shortcut ->
-                                runCommand(
-                                    "keyboard_hotkey",
-                                    buildJsonObject { put("keys", buildJsonArray { shortcut.keys.forEach { add(it) } }) },
-                                )
-                            },
+                            onShortcut = { shortcut -> runHotkey(shortcut.keys) },
+                            onBack = { screen = Screen.Dashboard },
+                        )
+
+                        Screen.Presentation -> PresentationScreen(
+                            snackbarHostState = snackbarHostState,
+                            onKey = { key -> runHotkey(listOf(key)) },
                             onBack = { screen = Screen.Dashboard },
                         )
 
