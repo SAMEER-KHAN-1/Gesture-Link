@@ -42,6 +42,7 @@ http://<pc-lan-ip>:8765/health
 - Files: `list_dir`, `download_file`, `upload_file`
 - Clipboard: `clipboard_get`, `clipboard_set` (plain text)
 - Processes: `process_list`, `process_kill` (refuses critical Windows processes and the server itself)
+- Display: `brightness_get`, `brightness_set` (laptop/built-in panels only - external monitors don't expose it)
 - Screen: `screenshot` (primary monitor, downscaled JPEG)
 - Mouse: `mouse_move`, `mouse_click`, `mouse_scroll`
 - Keyboard: `keyboard_type`, `keyboard_key`

@@ -118,6 +118,8 @@ a response by the presence of the `push` key instead:
 | `screenshot`     | `{ "max_width": 1280 }` (optional) | captures the primary monitor as a JPEG: `{ "width": 1280, "height": 720, "data_base64": "..." }`; downscaled to `max_width` (clamped to 320-1920) |
 | `process_list`   | –                          | returns the running processes, biggest memory use first, as `{ "processes": [{ "pid": 1234, "name": "chrome.exe", "memory_mb": 210.5 }] }` (top 200) |
 | `process_kill`   | `{ "pid": 1234, "name": "chrome.exe" }` (`name` optional) | force-ends a process. If `name` is given and the pid no longer has that name (stale list, recycled pid) it refuses. Also refuses the server itself and critical Windows processes (csrss, winlogon, lsass, ...) |
+| `brightness_get` | –                          | returns the built-in display's brightness as `{ "brightness": 40 }` (0-100); errors on displays that don't expose WMI brightness (most external monitors) |
+| `brightness_set` | `{ "level": 40 }`          | sets the built-in display's brightness (integer 0-100) |
 | `mouse_move`     | `{ "dx": 0, "dy": 0 }`     | moves the cursor relative to its current position |
 | `mouse_click`    | `{ "button": "left" }`     | clicks the left or right mouse button           |
 | `mouse_scroll`   | `{ "ticks": 0 }`           | scrolls the wheel (positive = down, negative = up) |

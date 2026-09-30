@@ -7,9 +7,10 @@ a = Analysis(
     ['run.py'],
     pathex=[],
     binaries=[],
-    # toggle_radio.ps1 is loaded by path at runtime (server/actions/network.py), so it has
-    # to be copied into the bundle at the same relative path or the frozen exe won't find it.
-    datas=[('server/actions/scripts/toggle_radio.ps1', 'server/actions/scripts')],
+    # The .ps1 scripts are loaded by path at runtime (server/actions/network.py, brightness.py),
+    # so they have to be copied into the bundle at the same relative path or the frozen exe
+    # won't find them. Bundling the whole folder means a new script can't be forgotten here.
+    datas=[('server/actions/scripts', 'server/actions/scripts')],
     # uvicorn/websockets pick some of their implementations at runtime, which PyInstaller's
     # static analysis can miss - spelling them out here avoids a "module not found" at launch.
     hiddenimports=[
