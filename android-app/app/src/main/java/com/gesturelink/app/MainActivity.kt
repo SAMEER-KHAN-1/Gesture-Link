@@ -43,6 +43,7 @@ import com.gesturelink.app.ui.FilesScreen
 import com.gesturelink.app.ui.PairingScreen
 import com.gesturelink.app.ui.ProcessesScreen
 import com.gesturelink.app.ui.ScreenshotScreen
+import com.gesturelink.app.ui.ShortcutsScreen
 import com.gesturelink.app.ui.TouchpadScreen
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -52,8 +53,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.add
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
@@ -70,6 +73,7 @@ private sealed class Screen {
     object Touchpad : Screen()
     object Screenshot : Screen()
     object Processes : Screen()
+    object Shortcuts : Screen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -480,6 +484,7 @@ class MainActivity : ComponentActivity() {
                                     loadDir("")
                                 },
                                 onOpenTouchpad = { screen = Screen.Touchpad },
+                                onOpenShortcuts = { screen = Screen.Shortcuts },
                                 onOpenScreen = {
                                     screenshot = null // don't flash the previous session's frame
                                     screen = Screen.Screenshot
@@ -588,6 +593,17 @@ class MainActivity : ComponentActivity() {
                             processes = processes,
                             onRefresh = { loadProcesses() },
                             onKill = { process -> killProcess(process) },
+                            onBack = { screen = Screen.Dashboard },
+                        )
+
+                        Screen.Shortcuts -> ShortcutsScreen(
+                            snackbarHostState = snackbarHostState,
+                            onShortcut = { shortcut ->
+                                runCommand(
+                                    "keyboard_hotkey",
+                                    buildJsonObject { put("keys", buildJsonArray { shortcut.keys.forEach { add(it) } }) },
+                                )
+                            },
                             onBack = { screen = Screen.Dashboard },
                         )
 

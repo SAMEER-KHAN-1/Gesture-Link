@@ -52,6 +52,7 @@ fun DashboardScreen(
     onOpenApps: () -> Unit,
     onOpenFiles: () -> Unit,
     onOpenTouchpad: () -> Unit,
+    onOpenShortcuts: () -> Unit,
     onOpenScreen: () -> Unit,
     onOpenProcesses: () -> Unit,
     onDisconnect: () -> Unit,
@@ -264,10 +265,14 @@ fun DashboardScreen(
 
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "Touchpad", style = MaterialTheme.typography.titleMedium)
+                    Text(text = "Input", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = onOpenTouchpad, modifier = Modifier.fillMaxWidth()) {
                         Text("Open touchpad")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(onClick = onOpenShortcuts, modifier = Modifier.fillMaxWidth()) {
+                        Text("Keyboard shortcuts")
                     }
                 }
             }
