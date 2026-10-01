@@ -13,7 +13,7 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - Project skeleton - Gradle setup, manifest, placeholder launcher icon
 - `network/` - `GestureLinkClient`, a small OkHttp WebSocket wrapper that speaks the same JSON protocol as the PC server (`Protocol.kt` mirrors `server/protocol.py`). Tells push messages from command responses apart, fails any in-flight request rather than hanging it forever if the connection drops, and ignores stale callbacks left over from a connection that was already intentionally closed
 - `data/PairingStore.kt` - remembers the last PC (IP + token) that paired successfully, so the app can reconnect without re-entering it
-- `data/SettingsStore.kt` - app preferences that survive restarts (currently the touchpad's mouse sensitivity); separate from the pairing store so "Forget this PC" doesn't reset them
+- `data/SettingsStore.kt` - app preferences that survive restarts (the touchpad's mouse sensitivity and the theme choice); separate from the pairing store so "Forget this PC" doesn't reset them
 - `ui/PairingScreen.kt` - enter the PC's IP and pairing token, hit Connect, see whether it worked
 - `ui/DashboardScreen.kt` - power controls (shutdown/restart behind a confirmation dialog, sleep, lock, cancel pending shutdown), wifi/bluetooth switches, a brightness slider (only shown when the PC's display supports it), volume/media buttons, clipboard send/get buttons, a live CPU/RAM/disk/battery/uptime card, and disconnect/forget-this-PC actions
 - `ui/AppsScreen.kt` - fetches the PC's app list, searchable, tap an app to launch it remotely
@@ -27,7 +27,7 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - `data/ClipboardHelper.kt` - reads and writes the device's plain-text clipboard, used by the dashboard's clipboard card to sync text with the PC
 - `data/FileSender.kt` - reads a file picked via the system document picker into base64, ready to upload
 - `util/FormatUtils.kt` - small pure formatting helpers (file sizes and uptime), pulled out of `FilesScreen.kt` so they're unit-testable
-- `ui/SettingsScreen.kt` - the paired PC's address, Disconnect / Forget this PC (with a confirm dialog), and the app version; reached from the dashboard's Settings button and the home for future settings
+- `ui/SettingsScreen.kt` - the paired PC's address, Disconnect / Forget this PC (with a confirm dialog), a System/Light/Dark theme picker, and the app version; reached from the dashboard's Settings button and the home for future settings
 - `MainActivity.kt` - a small in-memory screen state machine (Pairing → Dashboard → Apps/Files/Touchpad/Shortcuts/Presentation/Screen/Processes) wiring all of the above to `GestureLinkClient`, plus a 5s poll loop for system stats while the dashboard is visible. Auto-reconnects to the last paired PC on launch, and drops back to the pairing screen with an explanation any time the connection is actually lost (not just on the first failed attempt)
 
 This now covers the full v1 feature set end to end: pair, then shut down / restart / sleep / lock the PC, flip wifi/bluetooth, control volume/media, launch apps, browse/download its files, and drive the mouse and keyboard, all from the phone.

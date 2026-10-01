@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.weight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -24,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.gesturelink.app.data.ThemeMode
 
 /**
  * App-level settings. Starts with the connection controls that used to crowd the
@@ -33,6 +35,8 @@ import androidx.compose.ui.unit.dp
 fun SettingsScreen(
     pairedAddress: String,
     appVersion: String,
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit,
     onDisconnect: () -> Unit,
     onForget: () -> Unit,
     onBack: () -> Unit,
@@ -71,6 +75,28 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = { confirmForget = true }, modifier = Modifier.fillMaxWidth()) {
                         Text("Forget this PC")
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "Appearance", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        ThemeMode.values().forEach { mode ->
+                            // The active choice is the filled button; the others are outlined.
+                            if (mode == themeMode) {
+                                Button(onClick = { onThemeModeChange(mode) }, modifier = Modifier.weight(1f)) { Text(mode.label) }
+                            } else {
+                                OutlinedButton(onClick = { onThemeModeChange(mode) }, modifier = Modifier.weight(1f)) { Text(mode.label) }
+                            }
+                        }
                     }
                 }
             }

@@ -8,7 +8,10 @@ import android.util.Base64
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
@@ -24,6 +27,7 @@ import com.gesturelink.app.data.FileSender
 import com.gesturelink.app.data.PairingInfo
 import com.gesturelink.app.data.PairingStore
 import com.gesturelink.app.data.SettingsStore
+import com.gesturelink.app.data.ThemeMode
 import com.gesturelink.app.network.AppInfo
 import com.gesturelink.app.network.AppsListResult
 import com.gesturelink.app.network.BrightnessResult
@@ -98,6 +102,7 @@ class MainActivity : ComponentActivity() {
             var connectionState by remember { mutableStateOf(ConnectionState.DISCONNECTED) }
             var errorMessage by remember { mutableStateOf<String?>(null) }
             var pairedToken by remember { mutableStateOf(saved?.token.orEmpty()) }
+            var themeMode by remember { mutableStateOf(settingsStore.themeMode) }
 
             // Mirrors what's in PairingStore, but as compose state so forgetting a PC
             // clears the pairing screen's fields immediately instead of showing stale ones.
@@ -423,7 +428,12 @@ class MainActivity : ComponentActivity() {
                     }
             }
 
-            MaterialTheme {
+            val useDarkTheme = when (themeMode) {
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+            }
+            MaterialTheme(colorScheme = if (useDarkTheme) darkColorScheme() else lightColorScheme()) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     when (screen) {
                         Screen.Dashboard -> {
@@ -620,6 +630,11 @@ class MainActivity : ComponentActivity() {
                         Screen.Settings -> SettingsScreen(
                             pairedAddress = savedInfo?.let { "${it.host}:${it.port}" } ?: "unknown",
                             appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "?",
+                            themeMode = themeMode,
+                            onThemeModeChange = { mode ->
+                                themeMode = mode
+                                settingsStore.themeMode = mode
+                            },
                             onDisconnect = {
                                 client.disconnect()
                                 connectionState = ConnectionState.DISCONNECTED
