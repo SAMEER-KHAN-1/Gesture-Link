@@ -3,7 +3,8 @@ package com.gesturelink.app.data
 import android.content.Context
 import android.content.SharedPreferences
 
-data class PairingInfo(val host: String, val port: Int, val token: String)
+/** [mac] is the PC's MAC address, learned while connected, so it can be woken with Wake-on-LAN later. */
+data class PairingInfo(val host: String, val port: Int, val token: String, val mac: String? = null)
 
 /** Remembers the last PC we successfully paired with, so we can auto-reconnect. */
 class PairingStore(context: Context) {
@@ -16,6 +17,7 @@ class PairingStore(context: Context) {
             .putString(KEY_HOST, info.host)
             .putInt(KEY_PORT, info.port)
             .putString(KEY_TOKEN, info.token)
+            .putString(KEY_MAC, info.mac) // null removes the key
             .apply()
     }
 
@@ -23,7 +25,7 @@ class PairingStore(context: Context) {
         val host = prefs.getString(KEY_HOST, null) ?: return null
         val token = prefs.getString(KEY_TOKEN, null) ?: return null
         val port = prefs.getInt(KEY_PORT, DEFAULT_PORT)
-        return PairingInfo(host, port, token)
+        return PairingInfo(host, port, token, prefs.getString(KEY_MAC, null))
     }
 
     fun clear() {
@@ -35,6 +37,7 @@ class PairingStore(context: Context) {
         private const val KEY_HOST = "host"
         private const val KEY_PORT = "port"
         private const val KEY_TOKEN = "token"
+        private const val KEY_MAC = "mac"
         const val DEFAULT_PORT = 8765
     }
 }

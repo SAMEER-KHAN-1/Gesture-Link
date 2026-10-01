@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Base64
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,6 +39,7 @@ import com.gesturelink.app.network.DownloadFileResult
 import com.gesturelink.app.network.FileEntry
 import com.gesturelink.app.network.GestureLinkClient
 import com.gesturelink.app.network.ListDirResult
+import com.gesturelink.app.network.MacAddressResult
 import com.gesturelink.app.network.ProcessInfo
 import com.gesturelink.app.network.ProcessListResult
 import com.gesturelink.app.network.RadioStatusResult
@@ -55,6 +57,7 @@ import com.gesturelink.app.ui.ShortcutsScreen
 import com.gesturelink.app.ui.TouchpadScreen
 import com.gesturelink.app.util.formatHostPort
 import com.gesturelink.app.util.parseHostPort
+import com.gesturelink.app.util.sendMagicPacket
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -321,6 +324,24 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            // Learned while connected (the PC is off by the time we need it), so Wake-on-LAN
+            // works the next time the PC is shut down.
+            fun refreshMacAddress() {
+                coroutineScope.launch {
+                    val mac = runCatching { client.sendCommand(pairedToken, "mac_address") }
+                        .getOrNull()
+                        ?.takeIf { it.ok }
+                        ?.let { Json.decodeFromJsonElement(MacAddressResult.serializer(), it.result).mac }
+                        ?: return@launch
+                    val current = savedInfo ?: return@launch
+                    if (current.mac != mac) {
+                        val updated = current.copy(mac = mac)
+                        pairingStore.save(updated)
+                        savedInfo = updated
+                    }
+                }
+            }
+
             fun connectTo(host: String, port: Int, token: String) {
                 errorMessage = null
                 pairedToken = token
@@ -333,10 +354,14 @@ class MainActivity : ComponentActivity() {
                             connectionState = state
                             when (state) {
                                 ConnectionState.CONNECTED -> {
-                                    val info = PairingInfo(host, port, token)
+                                    // Keep the MAC we already know for this PC; refreshMacAddress() below
+                                    // updates it in case the PC's network adapter changed.
+                                    val knownMac = savedInfo?.takeIf { it.host == host }?.mac
+                                    val info = PairingInfo(host, port, token, knownMac)
                                     pairingStore.save(info)
                                     savedInfo = info
                                     screen = Screen.Dashboard
+                                    refreshMacAddress()
                                 }
                                 ConnectionState.DISCONNECTED -> {
                                     // Also covers a connection dropping mid-use (not just a failed
@@ -666,6 +691,20 @@ class MainActivity : ComponentActivity() {
                             initialToken = savedInfo?.token.orEmpty(),
                             isConnecting = connectionState == ConnectionState.CONNECTING,
                             errorMessage = errorMessage,
+                            canWake = savedInfo?.mac != null,
+                            onWake = wake@{
+                                val info = savedInfo ?: return@wake
+                                val mac = info.mac ?: return@wake
+                                coroutineScope.launch {
+                                    val sent = sendMagicPacket(mac, info.host)
+                                    val message = if (sent) {
+                                        "Wake signal sent - give the PC a minute to start, then tap Connect"
+                                    } else {
+                                        "Couldn't send the wake signal"
+                                    }
+                                    Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
+                                }
+                            },
                             onConnect = { address, token ->
                                 val target = parseHostPort(address, PairingStore.DEFAULT_PORT)
                                 if (target == null) {

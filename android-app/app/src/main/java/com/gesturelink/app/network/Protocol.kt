@@ -94,6 +94,10 @@ data class ScreenshotResult(
 @Serializable
 data class BrightnessResult(val brightness: Int)
 
+/** Shape of the `result` payload for the `mac_address` action (used for Wake-on-LAN). */
+@Serializable
+data class MacAddressResult(val mac: String)
+
 /** One running process in the `result` payload for the `process_list` action. */
 @Serializable
 data class ProcessInfo(

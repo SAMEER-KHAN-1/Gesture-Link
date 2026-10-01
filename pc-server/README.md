@@ -23,6 +23,8 @@ The server also writes a log to `%LOCALAPPDATA%\GestureLink\logs\gesturelink.log
 
 The server listens on port 8765 by default. To use a different one (say 8765 is taken), change `"port"` in that `config.json` and restart the server - an unusable value just falls back to 8765. The tray menu shows the port in use, and the pairing QR code carries it, so scanning it is the easiest way to pair; if you type the address by hand, add the port as `192.168.1.5:9000`. Remember to allow the new port through the Windows firewall.
 
+**Wake-on-LAN:** the phone can power the PC back on, but only if the PC is set up to listen. The server just tells the phone its MAC address while connected (once, automatically); the wake-up packet is sent by the phone. On the PC, enable Wake-on-LAN in the BIOS/UEFI and in the network adapter's properties (Device Manager > adapter > Power Management > "Allow this device to wake the computer" / "Magic Packet"), and turn off Windows "Fast startup" if a full shutdown doesn't wake. Wi-Fi adapters rarely support this - use Ethernet.
+
 Running it opens a tray icon (bottom-right, near the clock) instead of a plain console window. Right-click it to:
 - see the current pairing token (needed once, in the Android app) and the port in use
 - show the pairing QR code

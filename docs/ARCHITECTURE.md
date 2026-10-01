@@ -104,6 +104,7 @@ a response by the presence of the `push` key instead:
 | `apps_list`      | –                          | returns installed/known-launchable apps         |
 | `app_launch`     | `{ "app_id": "..." }`      | launches an app returned by `apps_list`         |
 | `system_stats`   | –                          | returns CPU %, RAM %, system-drive disk used % and free GB (`null` if unreadable), uptime in seconds, and battery info |
+| `mac_address`    | –                          | returns `{ "mac": "AA:BB:CC:DD:EE:FF" }`, the MAC of the adapter on the LAN. The phone stores it so it can send a Wake-on-LAN magic packet (UDP broadcast, port 9) when the PC is off - the server can't help with the wake itself |
 | `volume_up`      | –                          | presses the volume-up media key                 |
 | `volume_down`    | –                          | presses the volume-down media key                |
 | `volume_mute_toggle` | –                      | presses the mute media key                       |

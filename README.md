@@ -50,6 +50,7 @@ Control your Windows PC from your Android phone over your local network — powe
 
 **Pairing**
 - Scan a QR code shown on the PC (or enter its IP + token by hand)
+- Wake a shut-down PC from the phone with Wake-on-LAN (the app learns the PC's MAC address while connected; the PC needs Wake-on-LAN enabled in its BIOS/network adapter settings and usually a wired connection)
 
 ## How it works
 

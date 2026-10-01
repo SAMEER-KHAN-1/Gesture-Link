@@ -33,6 +33,9 @@ fun PairingScreen(
     initialToken: String,
     isConnecting: Boolean,
     errorMessage: String?,
+    /** True once the last paired PC's MAC address is known, so it can be woken with Wake-on-LAN. */
+    canWake: Boolean,
+    onWake: () -> Unit,
     onConnect: (host: String, token: String) -> Unit,
 ) {
     var host by remember { mutableStateOf(initialHost) }
@@ -106,6 +109,13 @@ fun PairingScreen(
         ) {
             Text(if (isConnecting) "Connecting..." else "Connect")
         }
+
+        if (canWake) {
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(onClick = onWake, modifier = Modifier.fillMaxWidth()) {
+                Text("Wake PC (Wake-on-LAN)")
+            }
+        }
     }
 }
 
@@ -118,6 +128,8 @@ fun PairingScreenPreview() {
             initialToken = "",
             isConnecting = false,
             errorMessage = null,
+            canWake = true,
+            onWake = {},
             onConnect = { _, _ -> },
         )
     }

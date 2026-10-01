@@ -12,9 +12,9 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 
 - Project skeleton - Gradle setup, manifest, placeholder launcher icon
 - `network/` - `GestureLinkClient`, a small OkHttp WebSocket wrapper that speaks the same JSON protocol as the PC server (`Protocol.kt` mirrors `server/protocol.py`). Tells push messages from command responses apart, fails any in-flight request rather than hanging it forever if the connection drops, and ignores stale callbacks left over from a connection that was already intentionally closed
-- `data/PairingStore.kt` - remembers the last PC (IP + token) that paired successfully, so the app can reconnect without re-entering it
+- `data/PairingStore.kt` - remembers the last PC (IP, port, token and MAC address) that paired successfully, so the app can reconnect without re-entering it
 - `data/SettingsStore.kt` - app preferences that survive restarts (the touchpad's mouse sensitivity and the theme choice); separate from the pairing store so "Forget this PC" doesn't reset them
-- `ui/PairingScreen.kt` - enter the PC's IP (with `:port` if the server isn't on 8765) and pairing token, or scan the QR code, hit Connect, see whether it worked
+- `ui/PairingScreen.kt` - enter the PC's IP (with `:port` if the server isn't on 8765) and pairing token, or scan the QR code, hit Connect, see whether it worked, and a "Wake PC" button (Wake-on-LAN) once the PC's MAC address has been learned from a previous connection
 - `ui/DashboardScreen.kt` - power controls (shutdown/restart behind a confirmation dialog, sleep, lock, cancel pending shutdown), wifi/bluetooth switches, a brightness slider (only shown when the PC's display supports it), volume/media buttons, clipboard send/get buttons, a live CPU/RAM/disk/battery/uptime card with the connection's ping latency, and a Settings button
 - `ui/AppsScreen.kt` - fetches the PC's app list, searchable, tap an app to launch it remotely
 - `ui/FilesScreen.kt` - browses the PC's drives and folders (breadcrumb-free, just an Up button and a path stack), tap a file to download it, or pick one from the device to upload into the folder you're viewing
@@ -28,6 +28,7 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - `data/FileSender.kt` - reads a file picked via the system document picker into base64, ready to upload
 - `util/FormatUtils.kt` - small pure formatting helpers (file sizes and uptime), pulled out of `FilesScreen.kt` so they're unit-testable
 - `util/HostPort.kt` - parses/formats the PC address field (`192.168.1.5` or `192.168.1.5:9000`)
+- `util/WakeOnLan.kt` - builds and broadcasts the Wake-on-LAN magic packet from the PC's stored MAC address
 - `ui/SettingsScreen.kt` - the paired PC's address, Disconnect / Forget this PC (with a confirm dialog), a System/Light/Dark theme picker, and the app version; reached from the dashboard's Settings button and the home for future settings
 - `MainActivity.kt` - a small in-memory screen state machine (Pairing → Dashboard → Apps/Files/Touchpad/Shortcuts/Presentation/Screen/Processes/Settings) wiring all of the above to `GestureLinkClient`, plus a 5s poll loop for system stats and a ping round-trip time while the dashboard is visible. Auto-reconnects to the last paired PC on launch, and drops back to the pairing screen with an explanation any time the connection is actually lost (not just on the first failed attempt)
 
@@ -35,7 +36,7 @@ This now covers the full v1 feature set end to end: pair, then shut down / resta
 
 ## Tests
 
-Plain JVM unit tests (no emulator/device needed) live under `app/src/test/` and run with `./gradlew test`. So far that's `util/FormatUtilsTest.kt` and `util/HostPortTest.kt` - most of this app's logic lives in Composables or needs a live `GestureLinkClient`/Android framework, which need an instrumented test setup (not added yet); pure, framework-free logic gets covered here as it's extracted.
+Plain JVM unit tests (no emulator/device needed) live under `app/src/test/` and run with `./gradlew test`. So far that's `util/FormatUtilsTest.kt`, `util/HostPortTest.kt` and `util/WakeOnLanTest.kt` - most of this app's logic lives in Composables or needs a live `GestureLinkClient`/Android framework, which need an instrumented test setup (not added yet); pure, framework-free logic gets covered here as it's extracted.
 
 ## Structure
 
