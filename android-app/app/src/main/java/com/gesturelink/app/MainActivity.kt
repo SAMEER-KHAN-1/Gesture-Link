@@ -431,18 +431,29 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            fun uploadFile(uri: Uri) {
+            fun uploadFiles(uris: List<Uri>) {
                 val targetDir = filesPathStack.lastOrNull()
                 if (targetDir.isNullOrEmpty()) {
                     coroutineScope.launch { snackbarHostState.showSnackbar("Open a folder first") }
                     return
                 }
+                if (uris.isEmpty()) return
 
-                FileSender.read(applicationContext, uri)
-                    .onSuccess { picked ->
-                        uploadingName = picked.name
-                        coroutineScope.launch {
-                            runCatching {
+                // One at a time, in order: each file travels as a single base64 message, so sending
+                // them all at once would hold every file in memory (and on the socket) together.
+                coroutineScope.launch {
+                    var uploaded = 0
+                    val failures = mutableListOf<String>()
+                    try {
+                        uris.forEachIndexed { index, uri ->
+                            val picked = withContext(Dispatchers.IO) { FileSender.read(applicationContext, uri) }
+                                .getOrElse { throwable ->
+                                    failures += throwable.message ?: "couldn't read the picked file"
+                                    return@forEachIndexed
+                                }
+                            uploadingName = if (uris.size > 1) "${picked.name} (${index + 1} of ${uris.size})" else picked.name
+
+                            val error = runCatching {
                                 client.sendCommand(
                                     pairedToken,
                                     "upload_file",
@@ -452,27 +463,27 @@ class MainActivity : ComponentActivity() {
                                         put("data_base64", picked.base64Data)
                                     },
                                 )
-                            }
-                                .onSuccess { response ->
-                                    uploadingName = null
-                                    if (response.ok) {
-                                        snackbarHostState.showSnackbar("Uploaded ${picked.name}")
-                                        loadDir(targetDir)
-                                    } else {
-                                        snackbarHostState.showSnackbar(response.error ?: "couldn't upload '${picked.name}'")
-                                    }
-                                }
-                                .onFailure { throwable ->
-                                    uploadingName = null
-                                    snackbarHostState.showSnackbar(throwable.message ?: "couldn't upload '${picked.name}'")
-                                }
+                            }.fold(
+                                onSuccess = { response -> if (response.ok) null else response.error ?: "couldn't upload '${picked.name}'" },
+                                onFailure = { throwable -> throwable.message ?: "couldn't upload '${picked.name}'" },
+                            )
+                            if (error == null) uploaded++ else failures += error
                         }
+                    } finally {
+                        uploadingName = null
                     }
-                    .onFailure { throwable ->
-                        coroutineScope.launch {
-                            snackbarHostState.showSnackbar(throwable.message ?: "couldn't read the picked file")
-                        }
+
+                    // The user may have walked to another folder while this ran.
+                    if (uploaded > 0 && filesPathStack.lastOrNull() == targetDir) loadDir(targetDir)
+
+                    val message = when {
+                        failures.isEmpty() && uris.size == 1 -> "Uploaded 1 file"
+                        failures.isEmpty() -> "Uploaded $uploaded files"
+                        uris.size == 1 -> failures.first()
+                        else -> "Uploaded $uploaded of ${uris.size} files - ${failures.first()}"
                     }
+                    snackbarHostState.showSnackbar(message)
+                }
             }
 
             fun saveBookmarks(updated: List<String>) {
@@ -703,7 +714,7 @@ class MainActivity : ComponentActivity() {
                                 filesPathStack = pathAncestors(path)
                                 loadDir(path)
                             },
-                            onUploadFile = { uri -> uploadFile(uri) },
+                            onUploadFiles = { uris -> uploadFiles(uris) },
                             onCreateFolder = { name -> createFolder(name) },
                             onRenameEntry = { entry, newName -> renameEntry(entry, newName) },
                             onDeleteEntry = { entry -> deleteEntry(entry) },

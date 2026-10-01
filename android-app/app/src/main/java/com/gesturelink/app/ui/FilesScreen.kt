@@ -59,14 +59,14 @@ fun FilesScreen(
     onNavigateUp: () -> Unit,
     onToggleBookmark: () -> Unit,
     onOpenBookmark: (String) -> Unit,
-    onUploadFile: (Uri) -> Unit,
+    onUploadFiles: (List<Uri>) -> Unit,
     onCreateFolder: (String) -> Unit,
     onRenameEntry: (FileEntry, String) -> Unit,
     onDeleteEntry: (FileEntry) -> Unit,
     onBack: () -> Unit,
 ) {
-    val uploadLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let(onUploadFile)
+    val uploadLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isNotEmpty()) onUploadFiles(uris)
     }
     var bookmarksMenuOpen by remember { mutableStateOf(false) }
     val isBookmarked = currentPath in bookmarks
@@ -114,7 +114,7 @@ fun FilesScreen(
                 TextButton(
                     onClick = { uploadLauncher.launch(arrayOf("*/*")) },
                     enabled = currentPath.isNotEmpty() && uploadingName == null,
-                ) { Text("Upload here") }
+                ) { Text("Upload files") }
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
