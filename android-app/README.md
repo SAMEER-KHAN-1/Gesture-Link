@@ -39,7 +39,7 @@ This now covers the full v1 feature set end to end: pair, then shut down / resta
 
 ## Tests
 
-Plain JVM unit tests (no emulator/device needed) live under `app/src/test/` and run with `./gradlew test`. So far that's `util/FormatUtilsTest.kt`, `util/HostPortTest.kt`, `util/NotificationLogTest.kt`, `util/PathUtilsTest.kt` and `util/WakeOnLanTest.kt` - most of this app's logic lives in Composables or needs a live `GestureLinkClient`/Android framework, which need an instrumented test setup (not added yet); pure, framework-free logic gets covered here as it's extracted.
+Plain JVM unit tests (no emulator/device needed) live under `app/src/test/` and run with `./gradlew test`. So far that's `util/FormatUtilsTest.kt`, `util/HostPortTest.kt`, `util/NotificationLogTest.kt`, `util/PathUtilsTest.kt`, `util/WakeOnLanTest.kt` and `network/ProtocolTest.kt` (decoding of requests, responses, pushes and every action's result payload against server-shaped JSON) - most of this app's logic lives in Composables or needs a live `GestureLinkClient`/Android framework, which need an instrumented test setup (not added yet); pure, framework-free logic gets covered here as it's extracted.
 
 ## Structure
 
