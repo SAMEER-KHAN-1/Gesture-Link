@@ -50,6 +50,24 @@ def test_regenerate_keeps_the_other_settings():
     assert reloaded["port"] == 9999
 
 
+def test_resolve_port_uses_the_configured_port():
+    assert config.resolve_port({"port": 9000}) == 9000
+
+
+def test_resolve_port_defaults_when_the_key_is_missing():
+    assert config.resolve_port({}) == config.DEFAULT_PORT
+
+
+@pytest.mark.parametrize("bad_port", ["9000", 0, -1, 65536, None, 80.5, True])
+def test_resolve_port_falls_back_to_the_default_for_unusable_values(bad_port):
+    assert config.resolve_port({"port": bad_port}) == config.DEFAULT_PORT
+
+
+def test_resolve_port_accepts_the_edges_of_the_valid_range():
+    assert config.resolve_port({"port": 1}) == 1
+    assert config.resolve_port({"port": 65535}) == 65535
+
+
 def test_old_token_stops_working_and_new_one_works_after_regenerating():
     old_token = config.load_config()["pairing_token"]
     assert auth.is_token_valid(old_token, "10.0.0.1") is True

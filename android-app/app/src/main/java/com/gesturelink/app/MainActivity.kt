@@ -53,6 +53,8 @@ import com.gesturelink.app.ui.ScreenshotScreen
 import com.gesturelink.app.ui.SettingsScreen
 import com.gesturelink.app.ui.ShortcutsScreen
 import com.gesturelink.app.ui.TouchpadScreen
+import com.gesturelink.app.util.formatHostPort
+import com.gesturelink.app.util.parseHostPort
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -319,19 +321,19 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            fun connectTo(host: String, token: String) {
+            fun connectTo(host: String, port: Int, token: String) {
                 errorMessage = null
                 pairedToken = token
                 client.connect(
                     host = host,
-                    port = PairingStore.DEFAULT_PORT,
+                    port = port,
                     onStateChanged = { state ->
                         // Callback fires on OkHttp's thread, not the main thread.
                         runOnUiThread {
                             connectionState = state
                             when (state) {
                                 ConnectionState.CONNECTED -> {
-                                    val info = PairingInfo(host, PairingStore.DEFAULT_PORT, token)
+                                    val info = PairingInfo(host, port, token)
                                     pairingStore.save(info)
                                     savedInfo = info
                                     screen = Screen.Dashboard
@@ -361,7 +363,7 @@ class MainActivity : ComponentActivity() {
             // always mean re-entering (or re-scanning) the IP and token by hand.
             LaunchedEffect(Unit) {
                 if (saved != null) {
-                    connectTo(saved.host, saved.token)
+                    connectTo(saved.host, saved.port, saved.token)
                 }
             }
 
@@ -660,11 +662,18 @@ class MainActivity : ComponentActivity() {
                         )
 
                         Screen.Pairing -> PairingScreen(
-                            initialHost = savedInfo?.host.orEmpty(),
+                            initialHost = savedInfo?.let { formatHostPort(it.host, it.port, PairingStore.DEFAULT_PORT) }.orEmpty(),
                             initialToken = savedInfo?.token.orEmpty(),
                             isConnecting = connectionState == ConnectionState.CONNECTING,
                             errorMessage = errorMessage,
-                            onConnect = { host, token -> connectTo(host, token) },
+                            onConnect = { address, token ->
+                                val target = parseHostPort(address, PairingStore.DEFAULT_PORT)
+                                if (target == null) {
+                                    errorMessage = "That address isn't valid - use e.g. 192.168.1.5 or 192.168.1.5:9000."
+                                } else {
+                                    connectTo(target.host, target.port, token)
+                                }
+                            },
                         )
                     }
                 }

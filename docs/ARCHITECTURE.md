@@ -16,7 +16,7 @@ GestureLink has two halves that talk to each other over a plain local-network We
                                               (power, radios, processes, apps)
 ```
 
-- The **PC service** can start with Windows (opt-in, toggled from its own tray menu), sits in the system tray, and hosts a WebSocket server bound to the machine's LAN IP on a fixed port.
+- The **PC service** can start with Windows (opt-in, toggled from its own tray menu), sits in the system tray, and hosts a WebSocket server bound to the machine's LAN IP on port 8765 by default (changeable via `port` in the server's `config.json`; the pairing QR code carries the port).
 - On first run it generates a random **pairing token** and shows it (tray notification / window), so only a phone that has seen the token can issue commands.
 - The **Android app** stores the PC's IP + token after the first successful pairing and reconnects automatically after that.
 - Every command from phone → PC is a small JSON object; every reply PC → phone is a small JSON object. See the protocol below.

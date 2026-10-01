@@ -15,7 +15,7 @@ from server.actions import get_handler
 from server.actions.mouse import release_held_buttons
 from server.auth import is_locked_out, is_token_valid
 from server.battery_watch import battery_watch_loop
-from server.config import load_config
+from server.config import load_config, resolve_port
 from server.protocol import CommandRequest, CommandResponse
 from server.ws_manager import manager
 
@@ -27,7 +27,7 @@ app = FastAPI(title="GestureLink PC Server")
 @app.on_event("startup")
 async def on_startup():
     config = load_config()
-    logger.info("listening on %s:%s", config["host"], config["port"])
+    logger.info("listening on %s:%s", config["host"], resolve_port(config))
     # Console only, deliberately not logged: the log file shouldn't hold the token.
     print(f"[GestureLink] pairing token: {config['pairing_token']}")
     asyncio.create_task(battery_watch_loop())

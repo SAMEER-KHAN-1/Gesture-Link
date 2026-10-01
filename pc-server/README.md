@@ -21,8 +21,10 @@ First run creates a config file (host, port, pairing token) in `%LOCALAPPDATA%\G
 
 The server also writes a log to `%LOCALAPPDATA%\GestureLink\logs\gesturelink.log` (phones connecting/disconnecting, rejected tokens, failed commands - never the token itself). It rotates at 512 KB and keeps 3 older copies, so it can't grow without bound. This is the place to look when the packaged exe misbehaves, since it has no console window.
 
+The server listens on port 8765 by default. To use a different one (say 8765 is taken), change `"port"` in that `config.json` and restart the server - an unusable value just falls back to 8765. The tray menu shows the port in use, and the pairing QR code carries it, so scanning it is the easiest way to pair; if you type the address by hand, add the port as `192.168.1.5:9000`. Remember to allow the new port through the Windows firewall.
+
 Running it opens a tray icon (bottom-right, near the clock) instead of a plain console window. Right-click it to:
-- see the current pairing token (needed once, in the Android app)
+- see the current pairing token (needed once, in the Android app) and the port in use
 - show the pairing QR code
 - regenerate the pairing token (asks first - every paired phone stops working until it's paired again with the new token, so use it if the token leaked)
 - open the config folder

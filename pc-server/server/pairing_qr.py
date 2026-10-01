@@ -11,7 +11,7 @@ from tkinter import ttk
 import qrcode
 from PIL import ImageTk
 
-from server.config import load_config
+from server.config import load_config, resolve_port
 
 
 def get_lan_ip() -> str:
@@ -30,7 +30,7 @@ def get_lan_ip() -> str:
 def build_pairing_payload() -> str:
     config = load_config()
     host = get_lan_ip()
-    return f"gesturelink://{host}:{config['port']}?token={config['pairing_token']}"
+    return f"gesturelink://{host}:{resolve_port(config)}?token={config['pairing_token']}"
 
 
 def _show_window() -> None:

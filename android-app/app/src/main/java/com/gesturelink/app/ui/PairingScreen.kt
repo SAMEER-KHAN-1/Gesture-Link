@@ -43,7 +43,7 @@ fun PairingScreen(
     val scanLauncher = rememberLauncherForActivityResult(contract = ScanContract()) { result ->
         val raw = result.contents ?: return@rememberLauncherForActivityResult
         val uri = Uri.parse(raw)
-        uri.host?.let { host = it }
+        uri.host?.let { host = if (uri.port != -1) "$it:${uri.port}" else it }
         uri.getQueryParameter("token")?.let { token = it }
     }
 
@@ -61,7 +61,7 @@ fun PairingScreen(
         OutlinedTextField(
             value = host,
             onValueChange = { host = it },
-            label = { Text("PC IP address") },
+            label = { Text("PC IP address (add :port if not 8765)") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
             modifier = Modifier.fillMaxWidth(),

@@ -5,6 +5,7 @@ so the pairing token never ends up committed to git by accident.
 """
 
 import json
+import logging
 import os
 import secrets
 from pathlib import Path
@@ -14,6 +15,8 @@ CONFIG_FILE_NAME = "config.json"
 
 DEFAULT_HOST = "0.0.0.0"
 DEFAULT_PORT = 8765
+
+logger = logging.getLogger("gesturelink")
 
 
 def get_app_data_dir() -> Path:
@@ -53,6 +56,16 @@ def load_config() -> dict:
 def save_config(config: dict) -> None:
     with open(get_config_path(), "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2)
+
+
+def resolve_port(config: dict) -> int:
+    """The port from config.json, or the default if it's missing or not a usable port number
+    (a hand-edited typo shouldn't stop the server from starting)."""
+    port = config.get("port", DEFAULT_PORT)
+    if isinstance(port, int) and not isinstance(port, bool) and 1 <= port <= 65535:
+        return port
+    logger.warning("ignoring invalid port %r in config.json, using %d", port, DEFAULT_PORT)
+    return DEFAULT_PORT
 
 
 def regenerate_pairing_token() -> str:

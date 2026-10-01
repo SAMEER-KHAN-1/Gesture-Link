@@ -12,7 +12,7 @@ import uvicorn
 from PIL import Image, ImageDraw
 
 from server import startup
-from server.config import get_app_data_dir, load_config, regenerate_pairing_token
+from server.config import get_app_data_dir, load_config, regenerate_pairing_token, resolve_port
 from server.logging_setup import setup_logging
 from server.pairing_qr import show_pairing_qr
 
@@ -41,6 +41,7 @@ def _build_icon_image() -> Image.Image:
 class ServerTray:
     def __init__(self):
         self.config = load_config()
+        self.port = resolve_port(self.config)
         self._server: uvicorn.Server | None = None
         self._icon = pystray.Icon(
             "gesturelink",
@@ -48,6 +49,7 @@ class ServerTray:
             title="GestureLink",
             menu=pystray.Menu(
                 pystray.MenuItem(self._token_label, None, enabled=False),
+                pystray.MenuItem(self._port_label, None, enabled=False),
                 pystray.MenuItem("Show pairing QR code", self._show_qr),
                 pystray.MenuItem("Regenerate pairing token", self._regenerate_token),
                 pystray.MenuItem("Open config folder", self._open_config_folder),
@@ -58,6 +60,9 @@ class ServerTray:
 
     def _token_label(self, item) -> str:
         return f"Pairing token: {self.config['pairing_token']}"
+
+    def _port_label(self, item) -> str:
+        return f"Port: {self.port} (edit config.json to change)"
 
     def _show_qr(self, icon, item) -> None:
         show_pairing_qr()
@@ -89,7 +94,7 @@ class ServerTray:
         uvicorn_config = uvicorn.Config(
             "server.main:app",
             host=self.config["host"],
-            port=self.config["port"],
+            port=self.port,
             reload=False,
             log_level="info",
             log_config=None,  # our own setup_logging() handles output, incl. no-console exes
