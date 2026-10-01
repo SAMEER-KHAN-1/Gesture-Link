@@ -47,7 +47,7 @@ http://<pc-lan-ip>:8765/health
 - Apps: `apps_list`, `app_launch`
 - System: `system_stats`
 - Media: `volume_up`, `volume_down`, `volume_mute_toggle`, `media_play_pause`, `media_next`, `media_previous`
-- Files: `list_dir`, `download_file`, `upload_file`
+- Files: `list_dir`, `download_file`, `upload_file`, `create_folder`, `rename_path`, `delete_path` (to the Recycle Bin)
 - Clipboard: `clipboard_get`, `clipboard_set` (plain text)
 - Processes: `process_list`, `process_kill` (refuses critical Windows processes and the server itself)
 - Display: `brightness_get`, `brightness_set` (laptop/built-in panels only - external monitors don't expose it)

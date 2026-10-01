@@ -114,6 +114,9 @@ a response by the presence of the `push` key instead:
 | `list_dir`       | `{ "path": "" }`           | lists a directory's contents (empty path = drives) |
 | `download_file`  | `{ "path": "..." }`        | returns a file's bytes, base64-encoded (15MB limit) |
 | `upload_file`    | `{ "dir": "...", "name": "...", "data_base64": "..." }` | writes a base64-encoded file into `dir` (15MB limit) |
+| `create_folder`  | `{ "dir": "...", "name": "..." }` | creates a folder called `name` (a bare name, not a path) inside `dir`; returns its `path`. Errors if it already exists |
+| `rename_path`    | `{ "path": "...", "new_name": "..." }` | renames a file or folder within its current folder (`new_name` is a bare name); returns the new `path`. Never overwrites, and won't rename a drive |
+| `delete_path`    | `{ "path": "..." }`        | moves a file or folder to the Recycle Bin - never a permanent delete - and won't touch a drive. If Windows can't recycle something it prompts on the PC before deleting it permanently |
 | `clipboard_get`  | –                          | returns the PC clipboard's text as `{ "text": "...", "truncated": false }` (empty text if it holds no text; capped at 100,000 characters) |
 | `clipboard_set`  | `{ "text": "..." }`        | replaces the PC clipboard's contents with the given text (100,000 character limit) |
 | `screenshot`     | `{ "max_width": 1280 }` (optional) | captures the primary monitor as a JPEG: `{ "width": 1280, "height": 720, "data_base64": "..." }`; downscaled to `max_width` (clamped to 320-1920) |
