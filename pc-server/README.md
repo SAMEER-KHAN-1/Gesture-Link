@@ -21,6 +21,8 @@ First run creates a config file (host, port, pairing token) in `%LOCALAPPDATA%\G
 
 Running it opens a tray icon (bottom-right, near the clock) instead of a plain console window. Right-click it to:
 - see the current pairing token (needed once, in the Android app)
+- show the pairing QR code
+- regenerate the pairing token (asks first - every paired phone stops working until it's paired again with the new token, so use it if the token leaked)
 - open the config folder
 - toggle "Start with Windows" (adds/removes itself from the `HKCU\...\Run` registry key - no need to manually drop a shortcut in `shell:startup` anymore)
 - quit the server
