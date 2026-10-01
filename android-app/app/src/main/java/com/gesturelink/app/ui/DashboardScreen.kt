@@ -32,7 +32,7 @@ import com.gesturelink.app.network.SystemStats
 import com.gesturelink.app.util.formatUptime
 import kotlin.math.roundToInt
 
-private enum class ConfirmAction { SHUTDOWN, RESTART, FORGET }
+private enum class ConfirmAction { SHUTDOWN, RESTART }
 
 @Composable
 fun DashboardScreen(
@@ -56,8 +56,7 @@ fun DashboardScreen(
     onOpenPresentation: () -> Unit,
     onOpenScreen: () -> Unit,
     onOpenProcesses: () -> Unit,
-    onDisconnect: () -> Unit,
-    onForget: () -> Unit,
+    onOpenSettings: () -> Unit,
     onVolumeUp: () -> Unit,
     onVolumeDown: () -> Unit,
     onVolumeMuteToggle: () -> Unit,
@@ -82,10 +81,7 @@ fun DashboardScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(text = "GestureLink", style = MaterialTheme.typography.headlineSmall)
-                Row {
-                    TextButton(onClick = onDisconnect) { Text("Disconnect") }
-                    TextButton(onClick = { pendingConfirm = ConfirmAction.FORGET }) { Text("Forget PC") }
-                }
+                TextButton(onClick = onOpenSettings) { Text("Settings") }
             }
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -313,11 +309,6 @@ fun DashboardScreen(
         val (title, message, onConfirm) = when (confirmAction) {
             ConfirmAction.SHUTDOWN -> Triple("Shut down PC?", "This will shut down the PC right now.", onShutdown)
             ConfirmAction.RESTART -> Triple("Restart PC?", "This will restart the PC right now.", onRestart)
-            ConfirmAction.FORGET -> Triple(
-                "Forget this PC?",
-                "You'll need to re-enter the IP and token (or re-scan its QR code) to pair again.",
-                onForget,
-            )
         }
         AlertDialog(
             onDismissRequest = { pendingConfirm = null },

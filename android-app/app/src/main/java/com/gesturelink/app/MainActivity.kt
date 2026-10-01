@@ -44,6 +44,7 @@ import com.gesturelink.app.ui.PairingScreen
 import com.gesturelink.app.ui.PresentationScreen
 import com.gesturelink.app.ui.ProcessesScreen
 import com.gesturelink.app.ui.ScreenshotScreen
+import com.gesturelink.app.ui.SettingsScreen
 import com.gesturelink.app.ui.ShortcutsScreen
 import com.gesturelink.app.ui.TouchpadScreen
 import kotlinx.coroutines.CancellationException
@@ -76,6 +77,7 @@ private sealed class Screen {
     object Processes : Screen()
     object Shortcuts : Screen()
     object Presentation : Screen()
+    object Settings : Screen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -501,18 +503,7 @@ class MainActivity : ComponentActivity() {
                                     screen = Screen.Processes
                                     loadProcesses()
                                 },
-                                onDisconnect = {
-                                    client.disconnect()
-                                    connectionState = ConnectionState.DISCONNECTED
-                                    screen = Screen.Pairing
-                                },
-                                onForget = {
-                                    client.disconnect()
-                                    pairingStore.clear()
-                                    savedInfo = null
-                                    connectionState = ConnectionState.DISCONNECTED
-                                    screen = Screen.Pairing
-                                },
+                                onOpenSettings = { screen = Screen.Settings },
                                 onVolumeUp = { runCommand("volume_up") },
                                 onVolumeDown = { runCommand("volume_down") },
                                 onVolumeMuteToggle = { runCommand("volume_mute_toggle") },
@@ -618,6 +609,24 @@ class MainActivity : ComponentActivity() {
                         Screen.Presentation -> PresentationScreen(
                             snackbarHostState = snackbarHostState,
                             onKey = { key -> runHotkey(listOf(key)) },
+                            onBack = { screen = Screen.Dashboard },
+                        )
+
+                        Screen.Settings -> SettingsScreen(
+                            pairedAddress = savedInfo?.let { "${it.host}:${it.port}" } ?: "unknown",
+                            appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "?",
+                            onDisconnect = {
+                                client.disconnect()
+                                connectionState = ConnectionState.DISCONNECTED
+                                screen = Screen.Pairing
+                            },
+                            onForget = {
+                                client.disconnect()
+                                pairingStore.clear()
+                                savedInfo = null
+                                connectionState = ConnectionState.DISCONNECTED
+                                screen = Screen.Pairing
+                            },
                             onBack = { screen = Screen.Dashboard },
                         )
 
