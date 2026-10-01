@@ -17,7 +17,7 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - `ui/PairingScreen.kt` - enter the PC's IP (with `:port` if the server isn't on 8765) and pairing token, or scan the QR code, hit Connect, see whether it worked, and a "Wake PC" button (Wake-on-LAN) once the PC's MAC address has been learned from a previous connection
 - `ui/DashboardScreen.kt` - power controls (shutdown/restart behind a confirmation dialog, sleep, lock, cancel pending shutdown), wifi/bluetooth switches, a brightness slider (only shown when the PC's display supports it), volume/media buttons, clipboard send/get buttons, a live CPU/RAM/disk/battery/uptime card with the connection's ping latency, and Alerts / Settings buttons
 - `ui/AppsScreen.kt` - fetches the PC's app list, searchable, tap an app to launch it remotely
-- `ui/FilesScreen.kt` - browses the PC's drives and folders (breadcrumb-free, just an Up button and a path stack), bookmark the current folder and jump back to bookmarks from a menu, tap a file to download it, or pick one from the device to upload into the folder you're viewing
+- `ui/FilesScreen.kt` - browses the PC's drives and folders (breadcrumb-free, just an Up button and a path stack), bookmark the current folder and jump back to bookmarks from a menu, tap a file to download it, or pick one from the device to upload into the folder you're viewing, create a folder, and long-press an entry to rename it or delete it to the PC's Recycle Bin (both with a name-validating / confirm dialog)
 - `ui/TouchpadScreen.kt` - a drag surface that moves the PC's mouse cursor (with a sensitivity slider; double-tap for a double-click), left/right/double click and scroll buttons, a drag-lock switch that holds the left button down (clicks give haptic feedback), plus a text field to type on the PC and send Enter/Backspace/Escape
 - `ui/ScreenshotScreen.kt` - shows a screenshot of the PC's screen, with a manual Refresh, a Live switch that re-captures every ~1.5s (one capture at a time, and it turns itself off if a capture fails), and pinch-to-zoom/pan
 - `ui/ShortcutsScreen.kt` - a grid of one-tap keyboard shortcuts (copy/paste, Alt+Tab, show desktop, Task Manager, ...) sent to the PC's `keyboard_hotkey` action
@@ -28,7 +28,7 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - `data/FileSender.kt` - reads a file picked via the system document picker into base64, ready to upload
 - `util/FormatUtils.kt` - small pure formatting helpers (file sizes and uptime), pulled out of `FilesScreen.kt` so they're unit-testable
 - `util/HostPort.kt` - parses/formats the PC address field (`192.168.1.5` or `192.168.1.5:9000`)
-- `util/PathUtils.kt` - folder-path helpers for the file browser: the chain of folders above a path (so a bookmark jump still has a working Up), a short folder label, and bookmark toggling
+- `util/PathUtils.kt` - folder-path helpers for the file browser: the chain of folders above a path (so a bookmark jump still has a working Up), a short folder label, bookmark toggling (plus keeping bookmarks in step when a folder is renamed or deleted), and file-name validation
 - `util/NotificationLog.kt` - the notification entry type and the "newest first, capped at 50" list helper behind the Alerts screen
 - `util/WakeOnLan.kt` - builds and broadcasts the Wake-on-LAN magic packet from the PC's stored MAC address
 - `ui/NotificationsScreen.kt` - history of the alerts the PC has pushed (e.g. low battery), newest first, with a Clear button; kept in memory for the current session (last 50)

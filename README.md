@@ -40,6 +40,7 @@ Control your Windows PC from your Android phone over your local network — powe
 - Browse the PC's drives and folders, and bookmark the ones you use often
 - Download a file from the PC to the phone (15MB limit)
 - Upload a file from the phone into the folder you're browsing (15MB limit)
+- Create folders, and long-press a file or folder to rename it or delete it to the PC's Recycle Bin
 
 **Touchpad**
 - Drag to move the mouse (adjustable sensitivity), tap to left/right click, double-click, scroll up/down

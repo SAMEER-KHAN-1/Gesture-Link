@@ -30,3 +30,34 @@ fun folderLabel(path: String): String {
 /** [path] added to [bookmarks] if it isn't there, removed if it is. Result is sorted. */
 fun toggleBookmark(bookmarks: List<String>, path: String): List<String> =
     (if (path in bookmarks) bookmarks - path else bookmarks + path).sorted()
+
+private val INVALID_NAME_CHARS = setOf('<', '>', ':', '"', '/', '\\', '|', '?', '*')
+
+/**
+ * Whether [name] is usable as a single Windows file/folder name. The PC re-checks (and refuses a
+ * path), this just saves a round trip and gives the dialog something to disable its button on.
+ */
+fun isValidFileName(name: String): Boolean {
+    if (name.isBlank() || name == "." || name == "..") return false
+    if (name.endsWith('.') || name.endsWith(' ')) return false // Windows silently strips these
+    return name.none { it in INVALID_NAME_CHARS || it.code < 32 }
+}
+
+private fun isSameOrInside(path: String, folder: String): Boolean {
+    val prefix = folder.trimEnd('\\')
+    return path.equals(folder, ignoreCase = true) ||
+        path.startsWith("$prefix\\", ignoreCase = true)
+}
+
+/** [bookmarks] without [path] or any bookmark inside it - used after that folder is deleted. */
+fun removeBookmarksUnder(bookmarks: List<String>, path: String): List<String> =
+    bookmarks.filterNot { isSameOrInside(it, path) }
+
+/**
+ * [bookmarks] after the folder at [oldPath] was renamed to [newPath]: a bookmark on it, or on
+ * anything inside it, follows the rename instead of going stale. Result is sorted.
+ */
+fun renameBookmarksUnder(bookmarks: List<String>, oldPath: String, newPath: String): List<String> =
+    bookmarks.map { bookmark ->
+        if (isSameOrInside(bookmark, oldPath)) newPath + bookmark.substring(oldPath.length) else bookmark
+    }.sorted()

@@ -60,6 +60,8 @@ import com.gesturelink.app.util.NotificationEntry
 import com.gesturelink.app.util.formatHostPort
 import com.gesturelink.app.util.parseHostPort
 import com.gesturelink.app.util.pathAncestors
+import com.gesturelink.app.util.removeBookmarksUnder
+import com.gesturelink.app.util.renameBookmarksUnder
 import com.gesturelink.app.util.sendMagicPacket
 import com.gesturelink.app.util.toggleBookmark
 import com.gesturelink.app.util.withNewest
@@ -73,6 +75,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.jsonPrimitive
@@ -468,6 +471,75 @@ class MainActivity : ComponentActivity() {
                     }
             }
 
+            fun saveBookmarks(updated: List<String>) {
+                if (updated != bookmarks) {
+                    settingsStore.bookmarks = updated
+                    bookmarks = updated
+                }
+            }
+
+            fun createFolder(name: String) {
+                val dir = filesPathStack.lastOrNull()
+                if (dir.isNullOrEmpty()) return
+                coroutineScope.launch {
+                    runCatching {
+                        client.sendCommand(pairedToken, "create_folder", buildJsonObject { put("dir", dir); put("name", name) })
+                    }
+                        .onSuccess { response ->
+                            if (response.ok) {
+                                snackbarHostState.showSnackbar("Created $name")
+                                loadDir(dir)
+                            } else {
+                                snackbarHostState.showSnackbar(response.error ?: "couldn't create '$name'")
+                            }
+                        }
+                        .onFailure { throwable ->
+                            snackbarHostState.showSnackbar(throwable.message ?: "couldn't create '$name'")
+                        }
+                }
+            }
+
+            fun renameEntry(entry: FileEntry, newName: String) {
+                coroutineScope.launch {
+                    runCatching {
+                        client.sendCommand(pairedToken, "rename_path", buildJsonObject { put("path", entry.path); put("new_name", newName) })
+                    }
+                        .onSuccess { response ->
+                            if (response.ok) {
+                                val newPath = response.result["path"]?.jsonPrimitive?.contentOrNull
+                                if (entry.isDir && newPath != null) {
+                                    saveBookmarks(renameBookmarksUnder(bookmarks, entry.path, newPath))
+                                }
+                                snackbarHostState.showSnackbar("Renamed to $newName")
+                                loadDir(filesPathStack.lastOrNull() ?: "")
+                            } else {
+                                snackbarHostState.showSnackbar(response.error ?: "couldn't rename '${entry.name}'")
+                            }
+                        }
+                        .onFailure { throwable ->
+                            snackbarHostState.showSnackbar(throwable.message ?: "couldn't rename '${entry.name}'")
+                        }
+                }
+            }
+
+            fun deleteEntry(entry: FileEntry) {
+                coroutineScope.launch {
+                    runCatching { client.sendCommand(pairedToken, "delete_path", buildJsonObject { put("path", entry.path) }) }
+                        .onSuccess { response ->
+                            if (response.ok) {
+                                if (entry.isDir) saveBookmarks(removeBookmarksUnder(bookmarks, entry.path))
+                                snackbarHostState.showSnackbar("Moved ${entry.name} to the Recycle Bin")
+                                loadDir(filesPathStack.lastOrNull() ?: "")
+                            } else {
+                                snackbarHostState.showSnackbar(response.error ?: "couldn't delete '${entry.name}'")
+                            }
+                        }
+                        .onFailure { throwable ->
+                            snackbarHostState.showSnackbar(throwable.message ?: "couldn't delete '${entry.name}'")
+                        }
+                }
+            }
+
             val useDarkTheme = when (themeMode) {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
                 ThemeMode.LIGHT -> false
@@ -627,6 +699,9 @@ class MainActivity : ComponentActivity() {
                                 loadDir(path)
                             },
                             onUploadFile = { uri -> uploadFile(uri) },
+                            onCreateFolder = { name -> createFolder(name) },
+                            onRenameEntry = { entry, newName -> renameEntry(entry, newName) },
+                            onDeleteEntry = { entry -> deleteEntry(entry) },
                             onBack = { screen = Screen.Dashboard },
                         )
 
