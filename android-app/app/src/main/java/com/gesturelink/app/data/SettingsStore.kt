@@ -31,8 +31,16 @@ class SettingsStore(context: Context) {
             prefs.edit().putString(KEY_THEME_MODE, value.name).apply()
         }
 
+    /** Folders bookmarked in the file browser, sorted. */
+    var bookmarks: List<String>
+        get() = (prefs.getStringSet(KEY_BOOKMARKS, null) ?: emptySet()).sorted()
+        set(value) {
+            prefs.edit().putStringSet(KEY_BOOKMARKS, value.toSet()).apply()
+        }
+
     companion object {
         private const val PREFS_NAME = "gesturelink_settings"
+        private const val KEY_BOOKMARKS = "file_bookmarks"
         private const val KEY_MOUSE_SENSITIVITY = "mouse_sensitivity"
         private const val KEY_THEME_MODE = "theme_mode"
         const val DEFAULT_MOUSE_SENSITIVITY = 1f

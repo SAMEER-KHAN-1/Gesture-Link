@@ -59,7 +59,9 @@ import com.gesturelink.app.ui.TouchpadScreen
 import com.gesturelink.app.util.NotificationEntry
 import com.gesturelink.app.util.formatHostPort
 import com.gesturelink.app.util.parseHostPort
+import com.gesturelink.app.util.pathAncestors
 import com.gesturelink.app.util.sendMagicPacket
+import com.gesturelink.app.util.toggleBookmark
 import com.gesturelink.app.util.withNewest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -138,6 +140,7 @@ class MainActivity : ComponentActivity() {
             var filesPathStack by remember { mutableStateOf(listOf<String>()) }
             var fileEntries by remember { mutableStateOf<List<FileEntry>>(emptyList()) }
             var filesLoading by remember { mutableStateOf(false) }
+            var bookmarks by remember { mutableStateOf(settingsStore.bookmarks) }
             var downloadingPath by remember { mutableStateOf<String?>(null) }
 
             var screenshot by remember { mutableStateOf<Bitmap?>(null) }
@@ -600,6 +603,7 @@ class MainActivity : ComponentActivity() {
                             entries = fileEntries,
                             canGoUp = filesPathStack.isNotEmpty(),
                             downloadingPath = downloadingPath,
+                            bookmarks = bookmarks,
                             onOpenEntry = { entry ->
                                 if (entry.isDir) {
                                     filesPathStack = filesPathStack + entry.path
@@ -611,6 +615,16 @@ class MainActivity : ComponentActivity() {
                             onNavigateUp = {
                                 filesPathStack = filesPathStack.dropLast(1)
                                 loadDir(filesPathStack.lastOrNull() ?: "")
+                            },
+                            onToggleBookmark = {
+                                val updated = toggleBookmark(bookmarks, filesPathStack.last())
+                                settingsStore.bookmarks = updated
+                                bookmarks = updated
+                            },
+                            onOpenBookmark = { path ->
+                                // Rebuild the folders above it so "Up" walks back out normally.
+                                filesPathStack = pathAncestors(path)
+                                loadDir(path)
                             },
                             onUploadFile = { uri -> uploadFile(uri) },
                             onBack = { screen = Screen.Dashboard },

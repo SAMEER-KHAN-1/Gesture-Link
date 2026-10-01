@@ -37,7 +37,7 @@ Control your Windows PC from your Android phone over your local network — powe
 - Send the phone's clipboard text to the PC, or copy the PC's clipboard text onto the phone
 
 **Files**
-- Browse the PC's drives and folders
+- Browse the PC's drives and folders, and bookmark the ones you use often
 - Download a file from the PC to the phone (15MB limit)
 - Upload a file from the phone into the folder you're browsing (15MB limit)
 

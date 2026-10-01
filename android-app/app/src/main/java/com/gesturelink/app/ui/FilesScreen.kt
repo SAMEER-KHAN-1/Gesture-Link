@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -23,11 +25,16 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.gesturelink.app.network.FileEntry
+import com.gesturelink.app.util.folderLabel
 import com.gesturelink.app.util.formatFileSize
 
 @Composable
@@ -38,14 +45,20 @@ fun FilesScreen(
     entries: List<FileEntry>,
     canGoUp: Boolean,
     downloadingPath: String?,
+    /** Folders the user has bookmarked (full paths), sorted. */
+    bookmarks: List<String>,
     onOpenEntry: (FileEntry) -> Unit,
     onNavigateUp: () -> Unit,
+    onToggleBookmark: () -> Unit,
+    onOpenBookmark: (String) -> Unit,
     onUploadFile: (Uri) -> Unit,
     onBack: () -> Unit,
 ) {
     val uploadLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let(onUploadFile)
     }
+    var bookmarksMenuOpen by remember { mutableStateOf(false) }
+    val isBookmarked = currentPath in bookmarks
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -85,6 +98,42 @@ fun FilesScreen(
                     onClick = { uploadLauncher.launch(arrayOf("*/*")) },
                     enabled = currentPath.isNotEmpty(),
                 ) { Text("Upload here") }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                TextButton(onClick = onToggleBookmark, enabled = currentPath.isNotEmpty()) {
+                    Text(if (isBookmarked) "★ Bookmarked" else "☆ Bookmark")
+                }
+                Box {
+                    TextButton(onClick = { bookmarksMenuOpen = true }, enabled = bookmarks.isNotEmpty()) {
+                        Text("Bookmarks (${bookmarks.size})")
+                    }
+                    DropdownMenu(expanded = bookmarksMenuOpen, onDismissRequest = { bookmarksMenuOpen = false }) {
+                        bookmarks.forEach { path ->
+                            DropdownMenuItem(
+                                text = {
+                                    Column {
+                                        Text(folderLabel(path))
+                                        Text(
+                                            text = path,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    bookmarksMenuOpen = false
+                                    onOpenBookmark(path)
+                                },
+                            )
+                        }
+                    }
+                }
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
