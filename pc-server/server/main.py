@@ -6,6 +6,7 @@ app actually talks to for commands.
 
 import asyncio
 import json
+import logging
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
@@ -18,13 +19,16 @@ from server.config import load_config
 from server.protocol import CommandRequest, CommandResponse
 from server.ws_manager import manager
 
+logger = logging.getLogger("gesturelink")
+
 app = FastAPI(title="GestureLink PC Server")
 
 
 @app.on_event("startup")
 async def on_startup():
     config = load_config()
-    print(f"[GestureLink] listening on {config['host']}:{config['port']}")
+    logger.info("listening on %s:%s", config["host"], config["port"])
+    # Console only, deliberately not logged: the log file shouldn't hold the token.
     print(f"[GestureLink] pairing token: {config['pairing_token']}")
     asyncio.create_task(battery_watch_loop())
 
@@ -38,12 +42,14 @@ def health():
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     client_address = websocket.client.host if websocket.client else "unknown"
+    logger.info("phone connected from %s", client_address)
     try:
         while True:
             raw = await websocket.receive_text()
             response = await handle_message(raw, client_address)
             await websocket.send_text(response.model_dump_json())
     except WebSocketDisconnect:
+        logger.info("phone disconnected from %s", client_address)
         manager.disconnect(websocket)
         if not manager.active_connections:
             # Nobody left who could send the matching "up" for a drag in progress.
@@ -58,11 +64,13 @@ async def handle_message(raw: str, client_address: str) -> CommandResponse:
         return CommandResponse(id="unknown", ok=False, action="unknown", error="malformed request")
 
     if is_locked_out(client_address):
+        logger.warning("rejected '%s' from %s: locked out after too many bad tokens", request.action, client_address)
         return CommandResponse(
             id=request.id, ok=False, action=request.action, error="too many failed attempts, try again shortly"
         )
 
     if not is_token_valid(request.token, client_address):
+        logger.warning("rejected '%s' from %s: invalid pairing token", request.action, client_address)
         return CommandResponse(id=request.id, ok=False, action=request.action, error="invalid pairing token")
 
     handler = get_handler(request.action)
@@ -75,4 +83,5 @@ async def handle_message(raw: str, client_address: str) -> CommandResponse:
         result = await handler(request.params)
         return CommandResponse(id=request.id, ok=True, action=request.action, result=result)
     except Exception as exc:
+        logger.warning("'%s' failed: %s", request.action, exc)
         return CommandResponse(id=request.id, ok=False, action=request.action, error=str(exc))

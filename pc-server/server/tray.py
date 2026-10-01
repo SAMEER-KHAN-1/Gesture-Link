@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw
 
 from server import startup
 from server.config import get_app_data_dir, load_config, regenerate_pairing_token
+from server.logging_setup import setup_logging
 from server.pairing_qr import show_pairing_qr
 
 ICON_SIZE = 64
@@ -91,11 +92,13 @@ class ServerTray:
             port=self.config["port"],
             reload=False,
             log_level="info",
+            log_config=None,  # our own setup_logging() handles output, incl. no-console exes
         )
         self._server = uvicorn.Server(uvicorn_config)
         self._server.run()
 
     def start(self) -> None:
+        setup_logging()
         server_thread = threading.Thread(target=self._run_server, daemon=True)
         server_thread.start()
         self._icon.run()  # blocks - has to be the main thread on Windows

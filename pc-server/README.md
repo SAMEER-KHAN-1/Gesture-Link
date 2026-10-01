@@ -19,6 +19,8 @@ python run.py
 
 First run creates a config file (host, port, pairing token) in `%LOCALAPPDATA%\GestureLink\config.json`. Nothing about this file is committed to git; it's your machine's local copy.
 
+The server also writes a log to `%LOCALAPPDATA%\GestureLink\logs\gesturelink.log` (phones connecting/disconnecting, rejected tokens, failed commands - never the token itself). It rotates at 512 KB and keeps 3 older copies, so it can't grow without bound. This is the place to look when the packaged exe misbehaves, since it has no console window.
+
 Running it opens a tray icon (bottom-right, near the clock) instead of a plain console window. Right-click it to:
 - see the current pairing token (needed once, in the Android app)
 - show the pairing QR code
