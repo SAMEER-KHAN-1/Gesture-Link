@@ -15,7 +15,7 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - `data/PairingStore.kt` - remembers the last PC (IP, port, token and MAC address) that paired successfully, so the app can reconnect without re-entering it
 - `data/SettingsStore.kt` - app preferences that survive restarts (the touchpad's mouse sensitivity and the theme choice); separate from the pairing store so "Forget this PC" doesn't reset them
 - `ui/PairingScreen.kt` - enter the PC's IP (with `:port` if the server isn't on 8765) and pairing token, or scan the QR code, hit Connect, see whether it worked, and a "Wake PC" button (Wake-on-LAN) once the PC's MAC address has been learned from a previous connection
-- `ui/DashboardScreen.kt` - power controls (shutdown/restart behind a confirmation dialog, sleep, lock, cancel pending shutdown), wifi/bluetooth switches, a brightness slider (only shown when the PC's display supports it), volume/media buttons, clipboard send/get buttons, a live CPU/RAM/disk/battery/uptime card with the connection's ping latency, and a Settings button
+- `ui/DashboardScreen.kt` - power controls (shutdown/restart behind a confirmation dialog, sleep, lock, cancel pending shutdown), wifi/bluetooth switches, a brightness slider (only shown when the PC's display supports it), volume/media buttons, clipboard send/get buttons, a live CPU/RAM/disk/battery/uptime card with the connection's ping latency, and Alerts / Settings buttons
 - `ui/AppsScreen.kt` - fetches the PC's app list, searchable, tap an app to launch it remotely
 - `ui/FilesScreen.kt` - browses the PC's drives and folders (breadcrumb-free, just an Up button and a path stack), tap a file to download it, or pick one from the device to upload into the folder you're viewing
 - `ui/TouchpadScreen.kt` - a drag surface that moves the PC's mouse cursor (with a sensitivity slider; double-tap for a double-click), left/right/double click and scroll buttons, a drag-lock switch that holds the left button down (clicks give haptic feedback), plus a text field to type on the PC and send Enter/Backspace/Escape
@@ -28,15 +28,17 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - `data/FileSender.kt` - reads a file picked via the system document picker into base64, ready to upload
 - `util/FormatUtils.kt` - small pure formatting helpers (file sizes and uptime), pulled out of `FilesScreen.kt` so they're unit-testable
 - `util/HostPort.kt` - parses/formats the PC address field (`192.168.1.5` or `192.168.1.5:9000`)
+- `util/NotificationLog.kt` - the notification entry type and the "newest first, capped at 50" list helper behind the Alerts screen
 - `util/WakeOnLan.kt` - builds and broadcasts the Wake-on-LAN magic packet from the PC's stored MAC address
+- `ui/NotificationsScreen.kt` - history of the alerts the PC has pushed (e.g. low battery), newest first, with a Clear button; kept in memory for the current session (last 50)
 - `ui/SettingsScreen.kt` - the paired PC's address, Disconnect / Forget this PC (with a confirm dialog), a System/Light/Dark theme picker, and the app version; reached from the dashboard's Settings button and the home for future settings
-- `MainActivity.kt` - a small in-memory screen state machine (Pairing → Dashboard → Apps/Files/Touchpad/Shortcuts/Presentation/Screen/Processes/Settings) wiring all of the above to `GestureLinkClient`, plus a 5s poll loop for system stats and a ping round-trip time while the dashboard is visible. Auto-reconnects to the last paired PC on launch, and drops back to the pairing screen with an explanation any time the connection is actually lost (not just on the first failed attempt)
+- `MainActivity.kt` - a small in-memory screen state machine (Pairing → Dashboard → Apps/Files/Touchpad/Shortcuts/Presentation/Screen/Processes/Notifications/Settings) wiring all of the above to `GestureLinkClient`, plus a 5s poll loop for system stats and a ping round-trip time while the dashboard is visible. Auto-reconnects to the last paired PC on launch, and drops back to the pairing screen with an explanation any time the connection is actually lost (not just on the first failed attempt)
 
 This now covers the full v1 feature set end to end: pair, then shut down / restart / sleep / lock the PC, flip wifi/bluetooth, control volume/media, launch apps, browse/download its files, and drive the mouse and keyboard, all from the phone.
 
 ## Tests
 
-Plain JVM unit tests (no emulator/device needed) live under `app/src/test/` and run with `./gradlew test`. So far that's `util/FormatUtilsTest.kt`, `util/HostPortTest.kt` and `util/WakeOnLanTest.kt` - most of this app's logic lives in Composables or needs a live `GestureLinkClient`/Android framework, which need an instrumented test setup (not added yet); pure, framework-free logic gets covered here as it's extracted.
+Plain JVM unit tests (no emulator/device needed) live under `app/src/test/` and run with `./gradlew test`. So far that's `util/FormatUtilsTest.kt`, `util/HostPortTest.kt`, `util/NotificationLogTest.kt` and `util/WakeOnLanTest.kt` - most of this app's logic lives in Composables or needs a live `GestureLinkClient`/Android framework, which need an instrumented test setup (not added yet); pure, framework-free logic gets covered here as it's extracted.
 
 ## Structure
 

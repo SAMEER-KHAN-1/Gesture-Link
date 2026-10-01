@@ -58,6 +58,7 @@ fun DashboardScreen(
     onOpenPresentation: () -> Unit,
     onOpenScreen: () -> Unit,
     onOpenProcesses: () -> Unit,
+    onOpenNotifications: () -> Unit,
     onOpenSettings: () -> Unit,
     onVolumeUp: () -> Unit,
     onVolumeDown: () -> Unit,
@@ -83,7 +84,10 @@ fun DashboardScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(text = "GestureLink", style = MaterialTheme.typography.headlineSmall)
-                TextButton(onClick = onOpenSettings) { Text("Settings") }
+                Row {
+                    TextButton(onClick = onOpenNotifications) { Text("Alerts") }
+                    TextButton(onClick = onOpenSettings) { Text("Settings") }
+                }
             }
             Spacer(modifier = Modifier.height(16.dp))
 

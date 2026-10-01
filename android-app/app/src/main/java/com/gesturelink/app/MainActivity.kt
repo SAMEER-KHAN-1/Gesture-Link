@@ -49,15 +49,18 @@ import com.gesturelink.app.ui.AppsScreen
 import com.gesturelink.app.ui.DashboardScreen
 import com.gesturelink.app.ui.FilesScreen
 import com.gesturelink.app.ui.PairingScreen
+import com.gesturelink.app.ui.NotificationsScreen
 import com.gesturelink.app.ui.PresentationScreen
 import com.gesturelink.app.ui.ProcessesScreen
 import com.gesturelink.app.ui.ScreenshotScreen
 import com.gesturelink.app.ui.SettingsScreen
 import com.gesturelink.app.ui.ShortcutsScreen
 import com.gesturelink.app.ui.TouchpadScreen
+import com.gesturelink.app.util.NotificationEntry
 import com.gesturelink.app.util.formatHostPort
 import com.gesturelink.app.util.parseHostPort
 import com.gesturelink.app.util.sendMagicPacket
+import com.gesturelink.app.util.withNewest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -89,6 +92,7 @@ private sealed class Screen {
     object Shortcuts : Screen()
     object Presentation : Screen()
     object Settings : Screen()
+    object Notifications : Screen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -127,6 +131,7 @@ class MainActivity : ComponentActivity() {
             var appsLoading by remember { mutableStateOf(false) }
             var stats by remember { mutableStateOf<SystemStats?>(null) }
             var latencyMs by remember { mutableStateOf<Long?>(null) }
+            var notifications by remember { mutableStateOf<List<NotificationEntry>>(emptyList()) }
 
             // Empty string = drives ("This PC"). Each push is a directory the user opened,
             // so "Up" just pops the stack instead of asking the server for a parent path.
@@ -378,7 +383,10 @@ class MainActivity : ComponentActivity() {
                         if (push.push == "battery_low") {
                             val percent = push.data["battery_percent"]?.jsonPrimitive?.intOrNull
                             val message = if (percent != null) "PC battery low ($percent%)" else "PC battery low"
-                            runOnUiThread { coroutineScope.launch { snackbarHostState.showSnackbar(message) } }
+                            runOnUiThread {
+                                notifications = notifications.withNewest(NotificationEntry(message, System.currentTimeMillis()))
+                                coroutineScope.launch { snackbarHostState.showSnackbar(message) }
+                            }
                         }
                     },
                 )
@@ -552,6 +560,7 @@ class MainActivity : ComponentActivity() {
                                     screen = Screen.Processes
                                     loadProcesses()
                                 },
+                                onOpenNotifications = { screen = Screen.Notifications },
                                 onOpenSettings = { screen = Screen.Settings },
                                 onVolumeUp = { runCommand("volume_up") },
                                 onVolumeDown = { runCommand("volume_down") },
@@ -660,6 +669,12 @@ class MainActivity : ComponentActivity() {
                         Screen.Presentation -> PresentationScreen(
                             snackbarHostState = snackbarHostState,
                             onKey = { key -> runHotkey(listOf(key)) },
+                            onBack = { screen = Screen.Dashboard },
+                        )
+
+                        Screen.Notifications -> NotificationsScreen(
+                            notifications = notifications,
+                            onClear = { notifications = emptyList() },
                             onBack = { screen = Screen.Dashboard },
                         )
 
