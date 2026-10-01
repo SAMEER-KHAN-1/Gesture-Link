@@ -574,6 +574,12 @@ class MainActivity : ComponentActivity() {
                             onClick = { button ->
                                 runCommand("mouse_click", buildJsonObject { put("button", button) })
                             },
+                            onDoubleClick = {
+                                runCommand("mouse_click", buildJsonObject { put("button", "left"); put("count", 2) })
+                            },
+                            onButtonState = { button, down ->
+                                runCommand("mouse_button", buildJsonObject { put("button", button); put("state", if (down) "down" else "up") })
+                            },
                             onScroll = { ticks ->
                                 runCommand("mouse_scroll", buildJsonObject { put("ticks", ticks) })
                             },

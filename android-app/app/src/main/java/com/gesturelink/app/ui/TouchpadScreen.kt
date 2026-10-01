@@ -2,6 +2,7 @@ package com.gesturelink.app.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,9 +19,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +38,8 @@ import kotlin.math.roundToInt
 fun TouchpadScreen(
     onMove: (dx: Int, dy: Int) -> Unit,
     onClick: (button: String) -> Unit,
+    onDoubleClick: () -> Unit,
+    onButtonState: (button: String, down: Boolean) -> Unit,
     onScroll: (ticks: Int) -> Unit,
     onTypeText: (text: String) -> Unit,
     onKeyPress: (key: String) -> Unit,
@@ -42,6 +47,14 @@ fun TouchpadScreen(
 ) {
     var text by remember { mutableStateOf("") }
     var sensitivity by remember { mutableStateOf(1f) }
+    // While on, the PC's left button is held down so dragging the pad drags on the PC.
+    var dragLock by remember { mutableStateOf(false) }
+
+    // Leaving the screen with the button still held would leave it stuck down on the PC.
+    DisposableEffect(Unit) {
+        onDispose { if (dragLock) onButtonState("left", false) }
+    }
+
     Scaffold(
         topBar = {
             Row(
@@ -68,6 +81,9 @@ fun TouchpadScreen(
                     .weight(1f)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .pointerInput(Unit) {
+                        detectTapGestures(onDoubleTap = { onDoubleClick() })
+                    }
+                    .pointerInput(Unit) {
                         detectDragGestures { change, dragAmount ->
                             change.consume()
                             onMove((dragAmount.x * sensitivity).roundToInt(), (dragAmount.y * sensitivity).roundToInt())
@@ -76,7 +92,7 @@ fun TouchpadScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "Drag to move the pointer",
+                    text = if (dragLock) "Dragging - move to drag, switch off to drop" else "Drag to move the pointer, double-tap to double-click",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -109,6 +125,24 @@ fun TouchpadScreen(
             ) {
                 OutlinedButton(onClick = { onClick("left") }, modifier = Modifier.weight(1f)) { Text("Left click") }
                 OutlinedButton(onClick = { onClick("right") }, modifier = Modifier.weight(1f)) { Text("Right click") }
+                OutlinedButton(onClick = onDoubleClick, modifier = Modifier.weight(1f)) { Text("Double click") }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(text = "Drag lock (hold left button)", style = MaterialTheme.typography.bodyMedium)
+                Switch(
+                    checked = dragLock,
+                    onCheckedChange = { locked ->
+                        dragLock = locked
+                        onButtonState("left", locked)
+                    },
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
