@@ -17,6 +17,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 
 /**
@@ -30,6 +32,13 @@ fun PresentationScreen(
     onKey: (String) -> Unit,
     onBack: () -> Unit,
 ) {
+    // A buzz on each press lets the presenter feel the slide change without looking down.
+    val haptics = LocalHapticFeedback.current
+    fun press(key: String) {
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        onKey(key)
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -56,20 +65,20 @@ fun PresentationScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                OutlinedButton(onClick = { onKey("f5") }, modifier = Modifier.weight(1f)) { Text("Start (F5)") }
-                OutlinedButton(onClick = { onKey("escape") }, modifier = Modifier.weight(1f)) { Text("End (Esc)") }
-                OutlinedButton(onClick = { onKey("b") }, modifier = Modifier.weight(1f)) { Text("Blank (B)") }
+                OutlinedButton(onClick = { press("f5") }, modifier = Modifier.weight(1f)) { Text("Start (F5)") }
+                OutlinedButton(onClick = { press("escape") }, modifier = Modifier.weight(1f)) { Text("End (Esc)") }
+                OutlinedButton(onClick = { press("b") }, modifier = Modifier.weight(1f)) { Text("Blank (B)") }
             }
 
             Button(
-                onClick = { onKey("right") },
+                onClick = { press("right") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(2f),
             ) { Text("Next", style = MaterialTheme.typography.headlineMedium) }
 
             OutlinedButton(
-                onClick = { onKey("left") },
+                onClick = { press("left") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),

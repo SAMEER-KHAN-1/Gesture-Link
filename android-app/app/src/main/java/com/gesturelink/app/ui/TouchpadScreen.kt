@@ -30,7 +30,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
@@ -49,6 +51,8 @@ fun TouchpadScreen(
     var sensitivity by remember { mutableStateOf(1f) }
     // While on, the PC's left button is held down so dragging the pad drags on the PC.
     var dragLock by remember { mutableStateOf(false) }
+    val haptics = LocalHapticFeedback.current
+    fun tick() = haptics.performHapticFeedback(HapticFeedbackType.LongPress)
 
     // Leaving the screen with the button still held would leave it stuck down on the PC.
     DisposableEffect(Unit) {
@@ -81,7 +85,10 @@ fun TouchpadScreen(
                     .weight(1f)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .pointerInput(Unit) {
-                        detectTapGestures(onDoubleTap = { onDoubleClick() })
+                        detectTapGestures(onDoubleTap = {
+                            tick()
+                            onDoubleClick()
+                        })
                     }
                     .pointerInput(Unit) {
                         detectDragGestures { change, dragAmount ->
@@ -123,9 +130,27 @@ fun TouchpadScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                OutlinedButton(onClick = { onClick("left") }, modifier = Modifier.weight(1f)) { Text("Left click") }
-                OutlinedButton(onClick = { onClick("right") }, modifier = Modifier.weight(1f)) { Text("Right click") }
-                OutlinedButton(onClick = onDoubleClick, modifier = Modifier.weight(1f)) { Text("Double click") }
+                OutlinedButton(
+                    onClick = {
+                        tick()
+                        onClick("left")
+                    },
+                    modifier = Modifier.weight(1f),
+                ) { Text("Left click") }
+                OutlinedButton(
+                    onClick = {
+                        tick()
+                        onClick("right")
+                    },
+                    modifier = Modifier.weight(1f),
+                ) { Text("Right click") }
+                OutlinedButton(
+                    onClick = {
+                        tick()
+                        onDoubleClick()
+                    },
+                    modifier = Modifier.weight(1f),
+                ) { Text("Double click") }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -139,6 +164,7 @@ fun TouchpadScreen(
                 Switch(
                     checked = dragLock,
                     onCheckedChange = { locked ->
+                        tick()
                         dragLock = locked
                         onButtonState("left", locked)
                     },
