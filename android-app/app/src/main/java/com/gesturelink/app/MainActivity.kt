@@ -145,6 +145,7 @@ class MainActivity : ComponentActivity() {
             var filesLoading by remember { mutableStateOf(false) }
             var bookmarks by remember { mutableStateOf(settingsStore.bookmarks) }
             var downloadingPath by remember { mutableStateOf<String?>(null) }
+            var uploadingName by remember { mutableStateOf<String?>(null) }
 
             var screenshot by remember { mutableStateOf<Bitmap?>(null) }
             var screenshotLoading by remember { mutableStateOf(false) }
@@ -439,6 +440,7 @@ class MainActivity : ComponentActivity() {
 
                 FileSender.read(applicationContext, uri)
                     .onSuccess { picked ->
+                        uploadingName = picked.name
                         coroutineScope.launch {
                             runCatching {
                                 client.sendCommand(
@@ -452,6 +454,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                                 .onSuccess { response ->
+                                    uploadingName = null
                                     if (response.ok) {
                                         snackbarHostState.showSnackbar("Uploaded ${picked.name}")
                                         loadDir(targetDir)
@@ -460,6 +463,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                                 .onFailure { throwable ->
+                                    uploadingName = null
                                     snackbarHostState.showSnackbar(throwable.message ?: "couldn't upload '${picked.name}'")
                                 }
                         }
@@ -675,6 +679,7 @@ class MainActivity : ComponentActivity() {
                             entries = fileEntries,
                             canGoUp = filesPathStack.isNotEmpty(),
                             downloadingPath = downloadingPath,
+                            uploadingName = uploadingName,
                             bookmarks = bookmarks,
                             onOpenEntry = { entry ->
                                 if (entry.isDir) {

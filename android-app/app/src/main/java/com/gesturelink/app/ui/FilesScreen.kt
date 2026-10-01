@@ -20,6 +20,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -50,6 +51,8 @@ fun FilesScreen(
     entries: List<FileEntry>,
     canGoUp: Boolean,
     downloadingPath: String?,
+    /** Name of the file currently being sent to the PC, or null when no upload is running. */
+    uploadingName: String?,
     /** Folders the user has bookmarked (full paths), sorted. */
     bookmarks: List<String>,
     onOpenEntry: (FileEntry) -> Unit,
@@ -110,7 +113,7 @@ fun FilesScreen(
                 )
                 TextButton(
                     onClick = { uploadLauncher.launch(arrayOf("*/*")) },
-                    enabled = currentPath.isNotEmpty(),
+                    enabled = currentPath.isNotEmpty() && uploadingName == null,
                 ) { Text("Upload here") }
             }
             Row(
@@ -154,6 +157,24 @@ fun FilesScreen(
                 ) { Text("New folder") }
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            // A transfer is one request/response over the websocket, so there's no byte count to
+            // show - an indeterminate bar just tells the user it's still working.
+            val transferLabel = when {
+                uploadingName != null -> "Uploading $uploadingName..."
+                downloadingPath != null ->
+                    "Downloading ${entries.firstOrNull { it.path == downloadingPath }?.name ?: "file"}..."
+                else -> null
+            }
+            if (transferLabel != null) {
+                Text(
+                    text = transferLabel,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 8.dp))
+            }
 
             when {
                 isLoading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
