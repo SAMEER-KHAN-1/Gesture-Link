@@ -23,6 +23,7 @@ import com.gesturelink.app.data.FileSaver
 import com.gesturelink.app.data.FileSender
 import com.gesturelink.app.data.PairingInfo
 import com.gesturelink.app.data.PairingStore
+import com.gesturelink.app.data.SettingsStore
 import com.gesturelink.app.network.AppInfo
 import com.gesturelink.app.network.AppsListResult
 import com.gesturelink.app.network.BrightnessResult
@@ -83,11 +84,13 @@ private sealed class Screen {
 class MainActivity : ComponentActivity() {
 
     private lateinit var pairingStore: PairingStore
+    private lateinit var settingsStore: SettingsStore
     private val client = GestureLinkClient()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         pairingStore = PairingStore(applicationContext)
+        settingsStore = SettingsStore(applicationContext)
         val saved = pairingStore.load()
 
         setContent {
@@ -559,6 +562,8 @@ class MainActivity : ComponentActivity() {
                         )
 
                         Screen.Touchpad -> TouchpadScreen(
+                            initialSensitivity = settingsStore.mouseSensitivity,
+                            onSensitivityChangeFinished = { settingsStore.mouseSensitivity = it },
                             onMove = { dx, dy ->
                                 runCommand("mouse_move", buildJsonObject { put("dx", dx); put("dy", dy) })
                             },

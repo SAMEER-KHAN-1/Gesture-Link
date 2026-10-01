@@ -13,6 +13,7 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - Project skeleton - Gradle setup, manifest, placeholder launcher icon
 - `network/` - `GestureLinkClient`, a small OkHttp WebSocket wrapper that speaks the same JSON protocol as the PC server (`Protocol.kt` mirrors `server/protocol.py`). Tells push messages from command responses apart, fails any in-flight request rather than hanging it forever if the connection drops, and ignores stale callbacks left over from a connection that was already intentionally closed
 - `data/PairingStore.kt` - remembers the last PC (IP + token) that paired successfully, so the app can reconnect without re-entering it
+- `data/SettingsStore.kt` - app preferences that survive restarts (currently the touchpad's mouse sensitivity); separate from the pairing store so "Forget this PC" doesn't reset them
 - `ui/PairingScreen.kt` - enter the PC's IP and pairing token, hit Connect, see whether it worked
 - `ui/DashboardScreen.kt` - power controls (shutdown/restart behind a confirmation dialog, sleep, lock, cancel pending shutdown), wifi/bluetooth switches, a brightness slider (only shown when the PC's display supports it), volume/media buttons, clipboard send/get buttons, a live CPU/RAM/disk/battery/uptime card, and disconnect/forget-this-PC actions
 - `ui/AppsScreen.kt` - fetches the PC's app list, searchable, tap an app to launch it remotely

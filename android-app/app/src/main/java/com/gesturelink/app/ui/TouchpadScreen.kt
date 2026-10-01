@@ -38,6 +38,9 @@ import kotlin.math.roundToInt
 
 @Composable
 fun TouchpadScreen(
+    initialSensitivity: Float,
+    /** Called once when the user lets go of the slider, not on every drag frame. */
+    onSensitivityChangeFinished: (Float) -> Unit,
     onMove: (dx: Int, dy: Int) -> Unit,
     onClick: (button: String) -> Unit,
     onDoubleClick: () -> Unit,
@@ -48,7 +51,7 @@ fun TouchpadScreen(
     onBack: () -> Unit,
 ) {
     var text by remember { mutableStateOf("") }
-    var sensitivity by remember { mutableStateOf(1f) }
+    var sensitivity by remember { mutableStateOf(initialSensitivity) }
     // While on, the PC's left button is held down so dragging the pad drags on the PC.
     var dragLock by remember { mutableStateOf(false) }
     val haptics = LocalHapticFeedback.current
@@ -115,6 +118,7 @@ fun TouchpadScreen(
                 Slider(
                     value = sensitivity,
                     onValueChange = { sensitivity = it },
+                    onValueChangeFinished = { onSensitivityChangeFinished(sensitivity) },
                     valueRange = 0.5f..3f,
                     modifier = Modifier.weight(1f),
                 )
