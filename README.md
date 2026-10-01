@@ -25,7 +25,7 @@ Control your Windows PC from your Android phone over your local network — powe
 - Play/pause, next/previous track
 
 **Dashboard**
-- Live CPU / RAM / disk / battery stats and PC uptime
+- Live CPU / RAM / disk / battery stats and PC uptime, plus the connection's ping latency
 
 **Screen**
 - View the PC's screen from the phone (manual refresh or a live auto-refresh), with pinch to zoom

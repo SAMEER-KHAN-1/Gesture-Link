@@ -38,6 +38,8 @@ private enum class ConfirmAction { SHUTDOWN, RESTART }
 fun DashboardScreen(
     snackbarHostState: SnackbarHostState,
     stats: SystemStats?,
+    /** Round-trip time to the PC in ms from the last ping; null until measured or if the PC didn't answer. */
+    latencyMs: Long?,
     wifiEnabled: Boolean,
     bluetoothEnabled: Boolean,
     /** Null when the PC's display doesn't support brightness control (e.g. an external monitor). */
@@ -87,7 +89,16 @@ fun DashboardScreen(
 
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "System", style = MaterialTheme.typography.titleMedium)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(text = "System", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = if (latencyMs != null) "Ping $latencyMs ms" else "Ping --",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     if (stats == null) {
                         Text("Loading...")

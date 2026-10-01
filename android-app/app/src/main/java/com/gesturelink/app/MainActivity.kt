@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.os.SystemClock
 import android.util.Base64
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -120,6 +121,7 @@ class MainActivity : ComponentActivity() {
             var apps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
             var appsLoading by remember { mutableStateOf(false) }
             var stats by remember { mutableStateOf<SystemStats?>(null) }
+            var latencyMs by remember { mutableStateOf<Long?>(null) }
 
             // Empty string = drives ("This PC"). Each push is a directory the user opened,
             // so "Up" just pops the stack instead of asking the server for a parent path.
@@ -454,6 +456,12 @@ class MainActivity : ComponentActivity() {
                                     ?.takeIf { it.ok }
                                     ?.let { Json.decodeFromJsonElement(BrightnessResult.serializer(), it.result).brightness }
                                 while (isActive) {
+                                    // Round-trip time of a no-op command; null if the PC didn't answer.
+                                    val pingStartedAt = SystemClock.elapsedRealtime()
+                                    latencyMs = runCatching { client.sendCommand(pairedToken, "ping") }
+                                        .getOrNull()
+                                        ?.takeIf { it.ok }
+                                        ?.let { SystemClock.elapsedRealtime() - pingStartedAt }
                                     runCatching { client.sendCommand(pairedToken, "system_stats") }
                                         .onSuccess { response ->
                                             if (response.ok) {
@@ -469,6 +477,7 @@ class MainActivity : ComponentActivity() {
                             DashboardScreen(
                                 snackbarHostState = snackbarHostState,
                                 stats = stats,
+                                latencyMs = latencyMs,
                                 wifiEnabled = wifiEnabled,
                                 bluetoothEnabled = bluetoothEnabled,
                                 brightness = brightness,
