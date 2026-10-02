@@ -58,6 +58,7 @@ import com.gesturelink.app.ui.TouchpadScreen
 import com.gesturelink.app.util.NotificationEntry
 import com.gesturelink.app.util.formatHostPort
 import com.gesturelink.app.util.parseHostPort
+import com.gesturelink.app.util.pairingErrorMessage
 import com.gesturelink.app.util.pairingInfoOnConnect
 import com.gesturelink.app.util.pathAncestors
 import com.gesturelink.app.util.removeBookmarksUnder
@@ -117,6 +118,7 @@ class MainActivity : ComponentActivity() {
             var screen by remember { mutableStateOf<Screen>(Screen.Pairing) }
             var connectionState by remember { mutableStateOf(ConnectionState.DISCONNECTED) }
             var errorMessage by remember { mutableStateOf<String?>(null) }
+            var verifyingToken by remember { mutableStateOf(false) }
             var pairedToken by remember { mutableStateOf(saved?.token.orEmpty()) }
             var themeMode by remember { mutableStateOf(settingsStore.themeMode) }
 
@@ -364,13 +366,33 @@ class MainActivity : ComponentActivity() {
                             connectionState = state
                             when (state) {
                                 ConnectionState.CONNECTED -> {
-                                    // Keep the MAC we already know for this PC; refreshMacAddress() below
-                                    // updates it in case the PC's network adapter changed.
-                                    val info = pairingInfoOnConnect(savedInfo, host, port, token)
-                                    pairingStore.save(info)
-                                    savedInfo = info
-                                    screen = Screen.Dashboard
-                                    refreshMacAddress()
+                                    // The socket opening only proves something is listening: the server checks
+                                    // the token per command, so without this a wrong (or since-regenerated)
+                                    // token would still land on the dashboard, where every action then fails.
+                                    verifyingToken = true
+                                    coroutineScope.launch {
+                                        val response = runCatching { client.sendCommand(token, "ping") }.getOrNull()
+                                        verifyingToken = false
+                                        when {
+                                            // The connection dropped while checking: the DISCONNECTED callback handles it.
+                                            response == null -> Unit
+                                            !response.ok -> {
+                                                client.disconnect()
+                                                connectionState = ConnectionState.DISCONNECTED
+                                                errorMessage = pairingErrorMessage(response.error)
+                                                screen = Screen.Pairing
+                                            }
+                                            else -> {
+                                                // Keep the MAC we already know for this PC; refreshMacAddress() below
+                                                // updates it in case the PC's network adapter changed.
+                                                val info = pairingInfoOnConnect(savedInfo, host, port, token)
+                                                pairingStore.save(info)
+                                                savedInfo = info
+                                                screen = Screen.Dashboard
+                                                refreshMacAddress()
+                                            }
+                                        }
+                                    }
                                 }
                                 ConnectionState.DISCONNECTED -> {
                                     // Also covers a connection dropping mid-use (not just a failed
@@ -806,7 +828,7 @@ class MainActivity : ComponentActivity() {
                         Screen.Pairing -> PairingScreen(
                             initialHost = savedInfo?.let { formatHostPort(it.host, it.port, PairingStore.DEFAULT_PORT) }.orEmpty(),
                             initialToken = savedInfo?.token.orEmpty(),
-                            isConnecting = connectionState == ConnectionState.CONNECTING,
+                            isConnecting = connectionState == ConnectionState.CONNECTING || verifyingToken,
                             errorMessage = errorMessage,
                             canWake = savedInfo?.mac != null,
                             onWake = wake@{

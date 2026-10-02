@@ -29,7 +29,7 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - `util/FormatUtils.kt` - small pure formatting helpers (file sizes and uptime), pulled out of `FilesScreen.kt` so they're unit-testable
 - `util/HostPort.kt` - parses/formats the PC address field (`192.168.1.5` or `192.168.1.5:9000`)
 - `util/PathUtils.kt` - folder-path helpers for the file browser: the chain of folders above a path (so a bookmark jump still has a working Up), a short folder label, bookmark toggling (plus keeping bookmarks in step when a folder is renamed or deleted), and file-name validation
-- `util/PairingLogic.kt` - pure pairing helpers: reads the PC's `gesturelink://` QR payload, decides which MAC address to keep when a connection succeeds (only for the same host) and when a newly reported one needs saving
+- `util/PairingLogic.kt` - pure pairing helpers: reads the PC's `gesturelink://` QR payload, words the error shown when the PC rejects the token, decides which MAC address to keep when a connection succeeds (only for the same host) and when a newly reported one needs saving
 - `util/NotificationLog.kt` - the notification entry type and the "newest first, capped at 50" list helper behind the Alerts screen
 - `util/WakeOnLan.kt` - builds and broadcasts the Wake-on-LAN magic packet from the PC's stored MAC address
 - `ui/NotificationsScreen.kt` - history of the alerts the PC has pushed (e.g. low battery), newest first, with a Clear button; kept in memory for the current session (last 50)

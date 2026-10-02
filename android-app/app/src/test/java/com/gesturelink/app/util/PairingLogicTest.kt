@@ -3,6 +3,7 @@ package com.gesturelink.app.util
 import com.gesturelink.app.data.PairingInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PairingLogicTest {
@@ -139,5 +140,29 @@ class PairingLogicTest {
         val current = PairingInfo("192.168.1.20", 9000, "tok", null)
         val updated = withLearnedMac(current, "AA:BB:CC:DD:EE:FF")!!
         assertEquals(Triple("192.168.1.20", 9000, "tok"), Triple(updated.host, updated.port, updated.token))
+    }
+
+    // --- pairingErrorMessage ---
+
+    @Test
+    fun `a rejected token is explained in plain words`() {
+        val message = pairingErrorMessage("invalid pairing token")
+        assertTrue("token" in message && "tray menu" in message)
+    }
+
+    @Test
+    fun `a lockout tells the user to wait`() {
+        val message = pairingErrorMessage("too many failed attempts, try again shortly")
+        assertTrue("30 seconds" in message)
+    }
+
+    @Test
+    fun `any other server error is passed through`() {
+        assertEquals("something unexpected", pairingErrorMessage("something unexpected"))
+    }
+
+    @Test
+    fun `a missing error still gives a message`() {
+        assertEquals("The PC refused the connection.", pairingErrorMessage(null))
     }
 }

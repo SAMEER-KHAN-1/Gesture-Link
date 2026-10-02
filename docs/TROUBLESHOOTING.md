@@ -50,7 +50,7 @@ If something else on the PC already uses port 8765, GestureLink shows an error s
 
 ## The pairing token
 
-The app connects without checking the token: it's only checked when you send a command. So a **wrong token** doesn't fail at the pairing screen. You reach the dashboard, but every action shows "invalid pairing token".
+When you tap Connect the app opens the connection and then checks the token with the PC. A **wrong token** (or one that was regenerated since you last paired) stays on the pairing screen with "That pairing token isn't right".
 
 - Compare the token you entered with the one in the tray menu. Tokens are 8 characters (digits and the letters a-f) and easy to mistype: scanning the QR code avoids that.
 - If you used **Regenerate pairing token** on the PC, every phone has to pair again with the new one.

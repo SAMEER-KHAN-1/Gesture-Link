@@ -53,7 +53,7 @@ Windows is driven through `ctypes` (input, media keys, sleep/lock, clipboard, Re
 
 ### Lifecycle of a connection
 
-1. **Pair.** The phone gets the PC's IP, port and token by QR scan or by typing them, opens `ws://<ip>:<port>/ws`, and saves them once the socket opens.
+1. **Pair.** The phone gets the PC's IP, port and token by QR scan or by typing them, opens `ws://<ip>:<port>/ws`, sends a `ping` to check the token, and saves them once the PC accepts it (a rejected token returns to the pairing screen with an explanation).
 2. **Use.** Every command carries the token. The server answers each request with a response carrying the same `id`. While the dashboard is open the phone also polls `ping` and `system_stats` every 5 seconds.
 3. **Push.** The server may send a push at any time to every connected phone.
 4. **Drop.** If the connection is lost (not a deliberate disconnect), the phone returns to the pairing screen with an explanation. On the PC, when the last phone disconnects any mouse button still held for a drag is released.

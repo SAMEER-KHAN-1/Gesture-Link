@@ -47,3 +47,17 @@ fun withLearnedMac(current: PairingInfo?, mac: String): PairingInfo? {
     if (current == null || current.mac == mac) return null
     return current.copy(mac = mac)
 }
+
+/**
+ * What to tell the user when the PC answered the connection check with an error instead of accepting
+ * the pairing token. The server's own wording ("invalid pairing token") isn't much help on the pairing
+ * screen, so the two cases that can actually happen here get a plain explanation.
+ */
+fun pairingErrorMessage(serverError: String?): String = when {
+    serverError == null -> "The PC refused the connection."
+    "invalid pairing token" in serverError ->
+        "That pairing token isn't right - check it against the one in the PC's tray menu, or scan the QR code."
+    "too many failed attempts" in serverError ->
+        "Too many wrong tokens in a row - wait 30 seconds, then try again."
+    else -> serverError
+}
