@@ -65,7 +65,9 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-Covers the action handlers in `server/actions/`, the websocket message handling in `server/main.py` (including auth in `server/auth.py`), and the battery-low push logic in `server/battery_watch.py`. Anything that touches real hardware (mouse/keyboard input, media keys, power, radios) is tested through a mocked `ctypes`/`subprocess` boundary rather than actually run - the tests move no mouse, press no keys, and shut nothing down.
+Covers the action handlers in `server/actions/`, the websocket message handling in `server/main.py` (including auth in `server/auth.py`), the websocket connection manager and protocol models, and the battery-low push logic in `server/battery_watch.py`. Anything that touches real hardware (mouse/keyboard input, media keys, power, radios) is tested through a mocked `ctypes`/`subprocess` boundary rather than actually run - the tests move no mouse, press no keys, and shut nothing down.
+
+The same suite runs on every push and pull request that touches `pc-server/` via GitHub Actions (`.github/workflows/pc-server-tests.yml`, on a Windows runner since the server calls Windows APIs).
 
 ## Packaging to a standalone .exe
 
