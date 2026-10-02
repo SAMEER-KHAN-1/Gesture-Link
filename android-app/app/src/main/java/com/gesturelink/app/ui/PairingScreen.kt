@@ -1,6 +1,5 @@
 package com.gesturelink.app.ui
 
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.gesturelink.app.util.parsePairingQr
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 
@@ -45,9 +45,9 @@ fun PairingScreen(
     // scanning it fills these fields in instead of typing them by hand.
     val scanLauncher = rememberLauncherForActivityResult(contract = ScanContract()) { result ->
         val raw = result.contents ?: return@rememberLauncherForActivityResult
-        val uri = Uri.parse(raw)
-        uri.host?.let { host = if (uri.port != -1) "$it:${uri.port}" else it }
-        uri.getQueryParameter("token")?.let { token = it }
+        val scanned = parsePairingQr(raw) ?: return@rememberLauncherForActivityResult
+        scanned.address?.let { host = it }
+        scanned.token?.let { token = it }
     }
 
     Column(

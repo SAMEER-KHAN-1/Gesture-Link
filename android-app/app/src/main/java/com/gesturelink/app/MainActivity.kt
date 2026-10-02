@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import com.gesturelink.app.data.ClipboardHelper
 import com.gesturelink.app.data.FileSaver
 import com.gesturelink.app.data.FileSender
-import com.gesturelink.app.data.PairingInfo
 import com.gesturelink.app.data.PairingStore
 import com.gesturelink.app.data.SettingsStore
 import com.gesturelink.app.data.ThemeMode
@@ -59,11 +58,13 @@ import com.gesturelink.app.ui.TouchpadScreen
 import com.gesturelink.app.util.NotificationEntry
 import com.gesturelink.app.util.formatHostPort
 import com.gesturelink.app.util.parseHostPort
+import com.gesturelink.app.util.pairingInfoOnConnect
 import com.gesturelink.app.util.pathAncestors
 import com.gesturelink.app.util.removeBookmarksUnder
 import com.gesturelink.app.util.renameBookmarksUnder
 import com.gesturelink.app.util.sendMagicPacket
 import com.gesturelink.app.util.toggleBookmark
+import com.gesturelink.app.util.withLearnedMac
 import com.gesturelink.app.util.withNewest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -345,12 +346,9 @@ class MainActivity : ComponentActivity() {
                         ?.takeIf { it.ok }
                         ?.let { Json.decodeFromJsonElement(MacAddressResult.serializer(), it.result).mac }
                         ?: return@launch
-                    val current = savedInfo ?: return@launch
-                    if (current.mac != mac) {
-                        val updated = current.copy(mac = mac)
-                        pairingStore.save(updated)
-                        savedInfo = updated
-                    }
+                    val updated = withLearnedMac(savedInfo, mac) ?: return@launch
+                    pairingStore.save(updated)
+                    savedInfo = updated
                 }
             }
 
@@ -368,8 +366,7 @@ class MainActivity : ComponentActivity() {
                                 ConnectionState.CONNECTED -> {
                                     // Keep the MAC we already know for this PC; refreshMacAddress() below
                                     // updates it in case the PC's network adapter changed.
-                                    val knownMac = savedInfo?.takeIf { it.host == host }?.mac
-                                    val info = PairingInfo(host, port, token, knownMac)
+                                    val info = pairingInfoOnConnect(savedInfo, host, port, token)
                                     pairingStore.save(info)
                                     savedInfo = info
                                     screen = Screen.Dashboard

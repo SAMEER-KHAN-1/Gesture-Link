@@ -29,6 +29,7 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 - `util/FormatUtils.kt` - small pure formatting helpers (file sizes and uptime), pulled out of `FilesScreen.kt` so they're unit-testable
 - `util/HostPort.kt` - parses/formats the PC address field (`192.168.1.5` or `192.168.1.5:9000`)
 - `util/PathUtils.kt` - folder-path helpers for the file browser: the chain of folders above a path (so a bookmark jump still has a working Up), a short folder label, bookmark toggling (plus keeping bookmarks in step when a folder is renamed or deleted), and file-name validation
+- `util/PairingLogic.kt` - pure pairing helpers: reads the PC's `gesturelink://` QR payload, decides which MAC address to keep when a connection succeeds (only for the same host) and when a newly reported one needs saving
 - `util/NotificationLog.kt` - the notification entry type and the "newest first, capped at 50" list helper behind the Alerts screen
 - `util/WakeOnLan.kt` - builds and broadcasts the Wake-on-LAN magic packet from the PC's stored MAC address
 - `ui/NotificationsScreen.kt` - history of the alerts the PC has pushed (e.g. low battery), newest first, with a Clear button; kept in memory for the current session (last 50)
@@ -39,7 +40,7 @@ This now covers the full v1 feature set end to end: pair, then shut down / resta
 
 ## Tests
 
-Plain JVM unit tests (no emulator/device needed) live under `app/src/test/` and run with `./gradlew test`. So far that's `util/FormatUtilsTest.kt`, `util/HostPortTest.kt`, `util/NotificationLogTest.kt`, `util/PathUtilsTest.kt`, `util/WakeOnLanTest.kt` and `network/ProtocolTest.kt` (decoding of requests, responses, pushes and every action's result payload against server-shaped JSON) - most of this app's logic lives in Composables or needs a live `GestureLinkClient`/Android framework, which need an instrumented test setup (not added yet); pure, framework-free logic gets covered here as it's extracted.
+Plain JVM unit tests (no emulator/device needed) live under `app/src/test/` and run with `./gradlew test`. So far that's `util/FormatUtilsTest.kt`, `util/HostPortTest.kt`, `util/NotificationLogTest.kt`, `util/PairingLogicTest.kt`, `util/PathUtilsTest.kt`, `util/WakeOnLanTest.kt` and `network/ProtocolTest.kt` (decoding of requests, responses, pushes and every action's result payload against server-shaped JSON) - most of this app's logic lives in Composables or needs a live `GestureLinkClient`/Android framework, which need an instrumented test setup (not added yet); pure, framework-free logic gets covered here as it's extracted.
 
 ## Structure
 
