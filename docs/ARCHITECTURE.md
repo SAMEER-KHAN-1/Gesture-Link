@@ -10,27 +10,67 @@ GestureLink has two halves that talk to each other over a plain local-network We
  │  (Kotlin + Compose)   │      (JSON messages)    │  (Python + FastAPI)    │
  └─────────────────────┘                          └──────────────────────┘
                                                               │
-                                                    pywin32 / PowerShell
+                                                  ctypes / PowerShell
                                                               │
                                                      Windows OS actions
                                               (power, radios, processes, apps)
 ```
 
-- The **PC service** can start with Windows (opt-in, toggled from its own tray menu), sits in the system tray, and hosts a WebSocket server bound to the machine's LAN IP on port 8765 by default (changeable via `port` in the server's `config.json`; the pairing QR code carries the port).
-- On first run it generates a random **pairing token** and shows it (tray notification / window), so only a phone that has seen the token can issue commands.
-- The **Android app** stores the PC's IP + token after the first successful pairing and reconnects automatically after that.
+- The **PC service** can start with Windows (opt-in, toggled from its own tray menu), sits in the system tray, and hosts a WebSocket server on port 8765 by default (`host` and `port` in the server's `config.json`; the host defaults to `0.0.0.0`, i.e. every network interface). The pairing QR code carries the LAN IP and the port.
+- On first run it generates a random **pairing token** (8 hex characters) and shows it in the tray menu and as a QR code, so only a phone that has seen the token can issue commands.
+- The **Android app** stores the PC's IP, port, token and MAC address after the first successful pairing and reconnects automatically after that.
 - Every command from phone → PC is a small JSON object; every reply PC → phone is a small JSON object. See the protocol below.
+
+## How the pieces fit
+
+### PC server (`pc-server/server/`)
+
+| module | role |
+|--------|------|
+| `tray.py` | the entry point's UI: tray icon and menu (token, port, show pairing QR, regenerate token, open config folder, start with Windows, quit); starts uvicorn on a background thread |
+| `main.py` | FastAPI app: `/health` and the `/ws` endpoint. `handle_message` is the one place a request is parsed, authenticated and dispatched |
+| `protocol.py` | pydantic models for requests, responses and pushes |
+| `auth.py` | pairing-token check and the per-address lockout |
+| `actions/` | one module per feature area; each handler registers itself under its action name with `@register(...)` in `actions/__init__.py`, so adding an action never touches `main.py` |
+| `ws_manager.py` | the set of connected phones; `broadcast` is how the server pushes unprompted messages |
+| `battery_watch.py` | background loop (every 60 s) that pushes `battery_low` |
+| `config.py` | `config.json` and the pairing token, both in `%LOCALAPPDATA%\GestureLink\` (outside the repo) |
+| `logging_setup.py` | rotating log file in `%LOCALAPPDATA%\GestureLink\logs\` (512 KB x 3 backups); the token is never written to it |
+| `startup.py` | the "Start with Windows" toggle (the user's `Run` registry key) |
+| `pairing_qr.py`, `net_utils.py` | the `gesturelink://<ip>:<port>?token=<token>` QR payload, and the LAN IP lookup (the MAC lookup is in `actions/wake_on_lan.py`) |
+
+Windows is driven through `ctypes` (input, media keys, sleep/lock, clipboard, Recycle Bin, screen capture), `shutdown.exe` (shutdown/restart/cancel) and a few bundled PowerShell scripts (`actions/scripts/`: radios, brightness) - not through pywin32.
+
+### Android app (`android-app/app/src/main/java/com/gesturelink/app/`)
+
+| package | role |
+|---------|------|
+| `network/` | `Protocol.kt` mirrors `protocol.py`; `GestureLinkClient` wraps an OkHttp WebSocket: `sendCommand` suspends until the reply with the same `id` arrives, pushes (no `id`) go to a callback, and in-flight requests fail instead of hanging when the connection drops |
+| `data/` | `PairingStore` (the paired PC) and `SettingsStore` (sensitivity, theme, bookmarks) in separate preference files, so "Forget this PC" doesn't reset settings; file save/read and clipboard helpers |
+| `ui/` | one Compose screen per feature |
+| `util/` | pure, unit-tested helpers (address parsing, pairing logic, path and format helpers, Wake-on-LAN packet, notification log) |
+| `MainActivity.kt` | in-memory screen state machine; owns the client and turns screen callbacks into commands |
+
+### Lifecycle of a connection
+
+1. **Pair.** The phone gets the PC's IP, port and token by QR scan or by typing them, opens `ws://<ip>:<port>/ws`, and saves them once the socket opens.
+2. **Use.** Every command carries the token. The server answers each request with a response carrying the same `id`. While the dashboard is open the phone also polls `ping` and `system_stats` every 5 seconds.
+3. **Push.** The server may send a push at any time to every connected phone.
+4. **Drop.** If the connection is lost (not a deliberate disconnect), the phone returns to the pairing screen with an explanation. On the PC, when the last phone disconnects any mouse button still held for a drag is released.
+5. **Reconnect.** On the next launch the phone reconnects to the saved PC automatically. If the PC is off, the phone can send a Wake-on-LAN packet using the MAC address it learned while connected.
 
 ## Why WebSocket over plain HTTP
 
-Commands are one-off, but we want the PC to be able to push things back to the phone unprompted later (e.g. "battery low", "someone is trying to pair"), and a persistent socket makes the connection status ("PC online/offline") trivial to show in the app without polling.
+Commands are one-off, but the PC needs to be able to push things back to the phone unprompted (so far: "battery low"), and a persistent socket makes the connection status ("PC online/offline") trivial to show in the app without polling.
 
 ## Security model (v1)
 
-- LAN-only. The server binds to the local network interface, not a public address.
-- Token-based auth: every message must include the token; the server drops/rejects any socket that hasn't authenticated within a few seconds of connecting.
-- The token is generated locally on the PC (not hardcoded), stored in a git-ignored local config file, and shown to the user once so they can enter it in the app.
+- LAN-only by design, not by enforcement. The server listens on every interface (`0.0.0.0`) and is not meant to be exposed to the internet: don't port-forward it. Windows Firewall's "private networks" prompt is the practical boundary.
+- Token-based auth: every message must include the token. There is no separate login step or timeout: an unauthenticated socket may stay open, but each message it sends is answered with an error and nothing is executed.
+- The token is generated locally on the PC (not hardcoded) and stored in `config.json` in the local app data folder, outside the repo. It is shown in the tray menu and as a QR code for pairing, printed to the console on startup, and never written to the log file. "Regenerate pairing token" in the tray invalidates the old one.
 - Brute-force guard: 5 wrong tokens from the same address locks that address out for 30 seconds before it can try again.
+- Destructive file actions are limited on purpose: deletes go to the Recycle Bin, renames never overwrite (uploads do replace a file of the same name), drive roots are refused, and `process_kill` refuses the server itself and critical Windows processes.
+- Traffic is plain `ws://`, not encrypted, so anyone who can sniff the local network can read the token. That is part of the "trusted home network" trade-off below.
 - No remote/internet relay in v1. If remote control off-LAN is wanted later, that's a deliberate opt-in addition (e.g. via the user's own VPN), not a default.
 
 This is intentionally a "trusted home network" threat model, not a hardened public-internet service — it's a personal remote for your own devices.
@@ -88,7 +128,7 @@ a response by the presence of the `push` key instead:
 |---------------|-----------------------------|---------------------------------------------------|
 | `battery_low` | `{ "battery_percent": 12 }` | the battery drops to 15% or below while unplugged, once per episode (not repeated every check until it recovers) |
 
-### Actions (v1 target set)
+### Actions
 
 | action           | params                     | description                                   |
 |------------------|----------------------------|------------------------------------------------|
@@ -132,13 +172,14 @@ a response by the presence of the `push` key instead:
 | `keyboard_type`  | `{ "text": "..." }`        | types the given text (layout-independent)       |
 | `keyboard_key`   | `{ "key": "enter" }`       | presses a named key (enter, backspace, tab, escape, space) |
 
-More actions will be added the same way as the project grows — this table is the contract both sides code against, so it's kept up to date whenever an action is added or changed.
+This table is the contract both sides code against, so it's kept up to date whenever an action is added or changed. Adding one means a handler with `@register("name")` in a module under `pc-server/server/actions/` (imported in `actions/__init__.py` if the module is new), a row here, and the matching call on the Android side.
 
 ## Repo layout
 
 ```
 GestureLink/
-├── pc-server/       # Python service: FastAPI app, command handlers, tray icon, packaging
-├── android-app/     # Kotlin/Compose app: UI, WebSocket client, pairing/storage
-└── docs/            # this file, plus any future design notes
+├── pc-server/       # Python service: FastAPI app, command handlers, tray icon, tests, packaging
+├── android-app/     # Kotlin/Compose app: UI, WebSocket client, pairing/storage, unit tests
+├── docs/            # this file
+└── .github/         # CI: pc-server tests (pytest) and the Android build + unit tests
 ```
