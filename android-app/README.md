@@ -42,6 +42,8 @@ This now covers the full v1 feature set end to end: pair, then shut down / resta
 
 Plain JVM unit tests (no emulator/device needed) live under `app/src/test/` and run with `./gradlew test`. So far that's `util/FormatUtilsTest.kt`, `util/HostPortTest.kt`, `util/NotificationLogTest.kt`, `util/PairingLogicTest.kt`, `util/PathUtilsTest.kt`, `util/WakeOnLanTest.kt` and `network/ProtocolTest.kt` (decoding of requests, responses, pushes and every action's result payload against server-shaped JSON) - most of this app's logic lives in Composables or needs a live `GestureLinkClient`/Android framework, which need an instrumented test setup (not added yet); pure, framework-free logic gets covered here as it's extracted.
 
+GitHub Actions (`.github/workflows/android-build.yml`) runs `testDebugUnitTest` and `assembleDebug` on every push and pull request that touches `android-app/`, so a compile error or failing test shows up even though the wrapper jar isn't committed (the workflow installs Gradle 8.7 directly).
+
 ## Structure
 
 ```

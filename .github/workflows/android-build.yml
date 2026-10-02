@@ -1,0 +1,47 @@
+name: Android build and tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "android-app/**"
+      - ".github/workflows/android-build.yml"
+  pull_request:
+    paths:
+      - "android-app/**"
+      - ".github/workflows/android-build.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # The repo doesn't commit the Gradle wrapper jar (see android-app/README.md), so install
+      # the same Gradle version gradle-wrapper.properties names instead of calling ./gradlew.
+      # The runner image already ships the Android SDK (platform 34) that compileSdk needs.
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: Run unit tests
+        run: gradle --no-daemon testDebugUnitTest
+
+      - name: Build debug APK
+        run: gradle --no-daemon assembleDebug
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-test-reports
+          path: android-app/app/build/reports/tests/
+          if-no-files-found: ignore
