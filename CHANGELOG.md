@@ -20,7 +20,7 @@ First complete version: a Windows PC server and an Android app that controls it 
 - MAC address lookup for Wake-on-LAN
 - Low-battery push notification sent to connected phones
 - Packaged as a standalone `GestureLink.exe` with PyInstaller
-- pytest suite (243 tests) run by GitHub Actions on Windows
+- pytest suite (249 tests) run by GitHub Actions on Windows
 
 ### Android app
 
@@ -46,4 +46,3 @@ First complete version: a Windows PC server and an Android app that controls it 
 - Windows PCs only; the connection is plain `ws://` on a trusted local network
 - Not yet verified end to end on a physical phone. The Android app had no Android SDK available during development, so its first compile is the Android CI job
 - Downloads to the phone need Android 10 or newer
-- If the server's port is already in use, the tray icon still appears but nothing is listening (see `docs/TROUBLESHOOTING.md`)

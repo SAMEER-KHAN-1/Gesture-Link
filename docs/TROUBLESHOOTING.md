@@ -46,7 +46,7 @@ The server works out its address by asking Windows which adapter it would use to
 
 ### Port already in use
 
-If something else on the PC already uses port 8765, the server can't start listening, but the tray icon still appears, so it looks like it's running when it isn't. The log shows the bind error, and `http://localhost:8765/health` won't answer (or answers from the other program). Set a different `"port"` in `config.json`, restart the server, and allow the new port through the firewall.
+If something else on the PC already uses port 8765, GestureLink shows an error saying it can't listen on that port and exits (the log has the exact bind error). Set a different `"port"` in `config.json` (in `%LOCALAPPDATA%\GestureLink`), start GestureLink again, and allow the new port through the firewall. If `http://localhost:8765/health` answers while GestureLink isn't running, the other program is the one using the port.
 
 ## The pairing token
 

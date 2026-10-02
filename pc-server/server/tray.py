@@ -4,6 +4,7 @@ token, open the config folder, or quit.
 """
 
 import ctypes
+import logging
 import threading
 import webbrowser
 
@@ -13,8 +14,10 @@ from PIL import Image, ImageDraw
 
 from server import startup
 from server.config import get_app_data_dir, load_config, regenerate_pairing_token, resolve_port
-from server.logging_setup import setup_logging
+from server.logging_setup import get_log_path, setup_logging
 from server.pairing_qr import show_pairing_qr
+
+logger = logging.getLogger("gesturelink")
 
 ICON_SIZE = 64
 
@@ -22,11 +25,17 @@ ICON_SIZE = 64
 _MB_YESNO = 0x04
 _MB_ICONWARNING = 0x30
 _MB_TOPMOST = 0x40000
+_MB_OK = 0x00
+_MB_ICONERROR = 0x10
 _IDYES = 6
 
 
 def _confirm(title: str, message: str) -> bool:
     return ctypes.windll.user32.MessageBoxW(0, message, title, _MB_YESNO | _MB_ICONWARNING | _MB_TOPMOST) == _IDYES
+
+
+def _show_error(title: str, message: str) -> None:
+    ctypes.windll.user32.MessageBoxW(0, message, title, _MB_OK | _MB_ICONERROR | _MB_TOPMOST)
 
 
 def _build_icon_image() -> Image.Image:
@@ -43,6 +52,7 @@ class ServerTray:
         self.config = load_config()
         self.port = resolve_port(self.config)
         self._server: uvicorn.Server | None = None
+        self._quitting = False
         self._icon = pystray.Icon(
             "gesturelink",
             icon=_build_icon_image(),
@@ -86,6 +96,7 @@ class ServerTray:
         startup.set_enabled(not startup.is_enabled())
 
     def _quit(self, icon, item) -> None:
+        self._quitting = True
         if self._server is not None:
             self._server.should_exit = True
         icon.stop()
@@ -100,10 +111,34 @@ class ServerTray:
             log_config=None,  # our own setup_logging() handles output, incl. no-console exes
         )
         self._server = uvicorn.Server(uvicorn_config)
-        self._server.run()
+        try:
+            self._server.run()
+        except SystemExit:
+            pass  # uvicorn exits (code 1) rather than raising when it can't bind its port
+        except Exception:
+            logger.exception("the server crashed")
+
+        # Returning without a Quit means it never really started, or died: without this the
+        # tray icon would stay up looking healthy while nothing is listening.
+        if not self._quitting:
+            self._on_server_stopped()
+
+    def _on_server_stopped(self) -> None:
+        logger.error("the server stopped on port %s without being asked to quit", self.port)
+        _show_error(
+            "GestureLink couldn't start",
+            f"GestureLink can't listen on port {self.port} - another program may already be using it.\n\n"
+            'Change "port" in config.json (in the GestureLink folder under %LOCALAPPDATA%), then start GestureLink again.\n\n'
+            f"Details: {get_log_path()}",
+        )
+        self._icon.stop()
+
+    def _on_icon_ready(self, icon) -> None:
+        # Starting the server only once the icon is up means a server that fails straight away
+        # can always stop it - stopping an icon that hasn't started running yet does nothing.
+        icon.visible = True
+        threading.Thread(target=self._run_server, daemon=True).start()
 
     def start(self) -> None:
         setup_logging()
-        server_thread = threading.Thread(target=self._run_server, daemon=True)
-        server_thread.start()
-        self._icon.run()  # blocks - has to be the main thread on Windows
+        self._icon.run(setup=self._on_icon_ready)  # blocks - has to be the main thread on Windows
