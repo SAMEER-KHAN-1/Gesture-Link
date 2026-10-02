@@ -10,7 +10,7 @@ One thing to know: this repo does **not** include the binary Gradle wrapper jar 
 
 ## What's here so far
 
-- Project skeleton - Gradle setup, manifest, placeholder launcher icon
+- Project skeleton - Gradle setup, manifest, placeholder launcher icon; the manifest allows cleartext traffic because the PC server speaks plain `ws://` on the LAN (Android blocks that by default since API 28, which would stop every connection)
 - `network/` - `GestureLinkClient`, a small OkHttp WebSocket wrapper that speaks the same JSON protocol as the PC server (`Protocol.kt` mirrors `server/protocol.py`). Tells push messages from command responses apart, fails any in-flight request rather than hanging it forever if the connection drops, and ignores stale callbacks left over from a connection that was already intentionally closed
 - `data/PairingStore.kt` - remembers the last PC (IP, port, token and MAC address) that paired successfully, so the app can reconnect without re-entering it
 - `data/SettingsStore.kt` - app preferences that survive restarts (the touchpad's mouse sensitivity, the theme choice and the file browser's bookmarked folders); separate from the pairing store so "Forget this PC" doesn't reset them

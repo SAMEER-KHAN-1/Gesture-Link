@@ -6,8 +6,13 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
+    <!-- The PC server speaks plain ws:// on the LAN (there's no domain name or certificate to
+         pin), and Android blocks cleartext by default for apps targeting API 28+. A network
+         security config can only allow cleartext per domain name, not per IP range, so it's
+         allowed app-wide; the server is LAN-only by design (see docs/ARCHITECTURE.md). -->
     <application
         android:allowBackup="true"
+        android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
