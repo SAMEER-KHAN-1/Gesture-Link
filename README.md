@@ -80,7 +80,7 @@ Right-click the tray icon and choose **Show pairing QR code**, then tap **Scan Q
 
 The PC service (`pc-server/`, Python + FastAPI) exposes a WebSocket endpoint on your network, guarded by a pairing token generated on first run. The app (`android-app/`, Kotlin + Jetpack Compose) connects, and sends small JSON commands (`shutdown`, `mouse_move`, `list_dir`, ...). The PC carries them out through Windows APIs (via `ctypes`) or PowerShell, and replies on the same socket. It can also push messages to the phone, like a low-battery alert.
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design, the security model and the full command protocol.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design, the security model and the full command protocol. If something doesn't work, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 ## Security
 
@@ -105,7 +105,7 @@ GestureLink is a remote for your own devices on a trusted home network, not a ha
 GestureLink/
 ├── pc-server/       # Python tray service that runs on the Windows PC
 ├── android-app/     # Kotlin/Jetpack Compose Android app
-├── docs/            # Architecture notes and protocol spec
+├── docs/            # Architecture notes, protocol spec, troubleshooting
 └── .github/         # CI workflows
 ```
 
