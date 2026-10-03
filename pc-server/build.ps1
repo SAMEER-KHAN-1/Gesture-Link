@@ -3,4 +3,4 @@
 #   pip install -r requirements-build.txt
 #   ./build.ps1
 
-pyinstaller --clean gesturelink.spec
+python -m PyInstaller --clean gesturelink.spec

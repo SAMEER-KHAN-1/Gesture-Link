@@ -78,4 +78,4 @@ pip install -r requirements-build.txt
 ./build.ps1
 ```
 
-That's `pyinstaller --clean gesturelink.spec` under the hood. Output lands at `dist/GestureLink.exe` — a windowed app (no console), still shows the same tray icon, still creates its config the same way on first run. Run it once and flip "Start with Windows" in the tray menu if you want it to launch automatically when you log in - no need to drop a shortcut in `shell:startup` by hand.
+That's `python -m PyInstaller --clean gesturelink.spec` under the hood. Output lands at `dist/GestureLink.exe` — a windowed app (no console), still shows the same tray icon, still creates its config the same way on first run. Run it once and flip "Start with Windows" in the tray menu if you want it to launch automatically when you log in - no need to drop a shortcut in `shell:startup` by hand.
